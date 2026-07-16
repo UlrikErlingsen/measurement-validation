@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 — 2026-07-16
+
+- Added a cross-wave/group comparability contract and group-level completeness audit.
+- Withholds construct-score mean comparisons until external scalar/threshold invariance evidence and its source are declared.
+- Records—but does not claim to verify—external invariance evidence and exports no cross-group score means while the gate is closed.
+
 ## 1.0.0 — 2026-07-16
 
 - Added a written measurement contract for construct boundaries, population, use, keying, thresholds, and confirmation plans.

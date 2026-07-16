@@ -17,5 +17,6 @@ def test_demo_is_deterministic_and_wholly_synthetic_shape() -> None:
 def test_starter_template_exposes_wide_item_layout() -> None:
     template = starter_template()
     assert template.columns[0] == "respondent_id"
-    assert list(template.columns[1:]) == [f"item_{index}" for index in range(1, 9)]
+    assert template.columns[1] == "collection_wave"
+    assert list(template.columns[2:]) == [f"item_{index}" for index in range(1, 9)]
     assert len(template) == 12

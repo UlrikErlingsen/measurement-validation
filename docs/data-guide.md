@@ -4,7 +4,7 @@
 
 Use wide data: one row per independent respondent and one numeric column per candidate item. A respondent identifier is optional but recommended because it lets the audit detect repeated rows. Remove names, email addresses, free text, and other direct identifiers before upload.
 
-If the same person appears repeatedly, respondents are nested in teams, or the data come from repeated waves, this release is not design-matched. Reshape only when one row genuinely represents one independent response occasion; otherwise use a multilevel or longitudinal measurement model.
+If the same person appears repeatedly or respondents are nested in teams, this release is not design-matched. Repeated waves may be named in a wave/group column for the comparability gate, but the exploratory factor model still treats rows as independent and the app does not fit a longitudinal model. Reshape only when one row genuinely represents one independent response occasion; otherwise use a multilevel or longitudinal measurement model.
 
 ## Candidate items
 
@@ -41,7 +41,7 @@ The exploratory score recipe is different from the model sample rule. It can req
 
 Pearson correlations treat response differences as approximately interval-scaled. Spearman correlations use ranks and are less sensitive to monotonic nonlinear spacing, but they are not polychoric correlations and do not create a categorical latent-variable model. Either choice needs a reason tied to the response format and intended interpretation.
 
-Avoid silently converting text labels with an arbitrary alphabetical order. Map ordered categories to documented numeric codes before upload. Binary items, sparse ordered categories, nominal indicators, and mixed item types require methods outside version 1.0.
+Avoid silently converting text labels with an arbitrary alphabetical order. Map ordered categories to documented numeric codes before upload. Binary items, sparse ordered categories, nominal indicators, and mixed item types require methods outside version 1.1.
 
 ## What this release does not ingest correctly
 
@@ -53,6 +53,8 @@ Use another workflow for:
 - item parcels supplied in place of the underlying items;
 - forced-choice, ipsative, ranking, count, nominal, or free-text responses;
 - planned IRT, DIF, invariance, multilevel, or longitudinal analysis.
+
+The wave/group field is metadata for a comparison safeguard, not an invariance estimator. If mean comparison is intended, document the external multi-group/longitudinal model, estimator, evidence level, source, and any partial-invariance decision in the measurement contract.
 
 ## File handling and privacy
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from measuresignal.design import audit_measure, classify_profile, orient_items
+from measuresignal.design import assess_score_comparability, audit_measure, classify_profile, orient_items
 from measuresignal.errors import DataProblem
 from measuresignal.examples import demo_dataframe, demo_defaults
 
@@ -35,6 +35,38 @@ def test_demo_audit_reports_range_completeness_and_unique_respondents() -> None:
     assert audit.summary["duplicate_unit_rows"] == 0
     assert audit.summary["out_of_range_cells"] == 0
     assert audit.summary["minimum_unique_values"] == 7
+
+
+def test_cross_wave_means_are_withheld_without_scalar_invariance() -> None:
+    frame = demo_dataframe()
+    result = assess_score_comparability(
+        frame,
+        items=demo_defaults()["items"],
+        group_column="collection_wave",
+        comparison_intended=True,
+        evidence_level="Metric / loading invariance",
+        evidence_source="External multi-group CFA",
+    )
+
+    assert result.status == "CROSS-GROUP COMPARISON WITHHELD"
+    assert result.mean_comparison_allowed is False
+    assert len(result.group_summary) == 2
+    assert "mean" not in result.group_summary.columns
+
+
+def test_declared_scalar_invariance_opens_gate_without_claiming_verification() -> None:
+    result = assess_score_comparability(
+        demo_dataframe(),
+        items=demo_defaults()["items"],
+        group_column="collection_wave",
+        comparison_intended=True,
+        evidence_level="Scalar / threshold invariance",
+        evidence_source="Preregistered external multi-group CFA report, model M3",
+    )
+
+    assert result.status == "EXTERNAL SCALAR INVARIANCE DECLARED"
+    assert result.mean_comparison_allowed is True
+    assert any("does not verify" in warning or "no CFA" in warning for warning in result.warnings)
 
 
 def test_audit_flags_duplicates_out_of_range_and_constant_patterns() -> None:

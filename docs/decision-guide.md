@@ -17,6 +17,8 @@ Resolve range violations and repeated respondent identifiers. Investigate item m
 
 Complete-case retention matters because every factor and reliability estimate describes only respondents who answered all selected items. Compare retained and non-retained respondents using ethically appropriate study information outside the app when missingness could be systematic.
 
+Read the cross-wave/group comparability gate separately. If scalar/threshold invariance has not been established and documented, do not compare construct-score means across waves or groups. Similar alpha values, similar loadings by eye, or metric invariance alone do not open the mean-comparison gate.
+
 ## Triangulate dimensionality
 
 Read parallel analysis beside the declared factor count, item content, rotated loadings, factor correlations, communalities, and residuals. A numerical retention rule cannot decide whether two dimensions are substantively distinguishable, whether a factor is a wording artifact, or whether a narrow factor omits essential content.

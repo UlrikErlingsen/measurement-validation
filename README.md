@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/UlrikErlingsen/measurement-validation/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/UlrikErlingsen/measurement-validation/actions/workflows/tests.yml/badge.svg"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-173C3A?logo=python&logoColor=white">
   <img alt="Streamlit" src="https://img.shields.io/badge/Streamlit-app-D95B40?logo=streamlit&logoColor=white">
   <a href="LICENSE"><img alt="License: AGPL-3.0-or-later" src="https://img.shields.io/badge/License-AGPL--3.0--or--later-36534E"></a>
@@ -22,7 +23,7 @@ MeasureSignal never treats high coefficient alpha as proof that items measure on
 
 ## Supported scope
 
-Version 1.0 supports:
+Version 1.1 supports:
 
 - wide data with one row per respondent;
 - 3 to 50 numeric candidate items;
@@ -37,19 +38,21 @@ Version 1.0 supports:
 - loading, communality, cross-loading, residual-correlation, and factor-coverage diagnostics;
 - raw and standardized alpha, percentile-bootstrap alpha intervals, omega total, and mean inter-item correlation;
 - corrected item-total correlations and alpha-if-deleted as sensitivities—not deletion instructions;
-- aggregate exploratory mean-score recipes with a declared missing-item rule.
+- aggregate exploratory mean-score recipes with a declared missing-item rule;
+- a declared cross-wave/group comparison intent, group completeness audit, and scalar-invariance evidence gate.
 
-It does **not** claim support for CFA, bifactor/higher-order modeling, polychoric or tetrachoric correlations, categorical latent-variable estimation, IRT, DIF, measurement invariance, test-retest or inter-rater reliability, survey weights, complex samples, multilevel/longitudinal measurement, imputation, predictive validity, or automated item selection.
+It does **not** estimate CFA, bifactor/higher-order models, polychoric or tetrachoric correlations, categorical latent-variable models, IRT, DIF, measurement invariance, test-retest or inter-rater reliability, survey weights, complex samples, multilevel/longitudinal measurement, imputation, predictive validity, or automated item selection. It records external invariance evidence and withholds cross-wave/group construct-mean comparisons until scalar/threshold evidence and its source are declared; it does not verify that declaration.
 
 ## Try it in three minutes
 
 1. Start the app and click **Load fictional three-factor demo**.
 2. Review the saved contract for an entirely fictional 12-item, three-dimension instrument.
 3. Open the audit to inspect missingness, endpoint use, range violations, respondent uniqueness, and constant patterns.
-4. Run the declared analysis. Compare the planned three factors with the fixed-seed parallel-analysis signal.
-5. Inspect the oblimin pattern matrix, factor correlations, cross-loadings, communalities, and residuals.
-6. Read alpha with its bootstrap interval beside omega, then review the exploratory scoring recipe.
-7. Export the aggregate evidence record and use it to pre-specify an independent confirmation.
+4. Read the tracking-comparability gate: the demo intentionally withholds wave comparisons because no scalar-invariance evidence is declared.
+5. Run the declared analysis. Compare the planned three factors with the fixed-seed parallel-analysis signal.
+6. Inspect the oblimin pattern matrix, factor correlations, cross-loadings, communalities, and residuals.
+7. Read alpha with its bootstrap interval beside omega, then review the exploratory scoring recipe.
+8. Export the aggregate evidence record and use it to pre-specify an independent confirmation.
 
 The demonstration is deterministic synthetic data. Its construct, item names, response pattern, and factor structure represent no real respondent, organization, course case, or empirical finding.
 
@@ -163,7 +166,7 @@ python -m build
 
 The suite checks reverse keying, range and response audits, known synthetic factor recovery, KMO/Bartlett calculations, deterministic parallel analysis, Pearson and Spearman paths, singular-matrix refusal, alpha/omega output, privacy-minimized exports, safe spreadsheet handling, deterministic examples, and every Streamlit page.
 
-## Relationship to the Signal tools
+## Relationship to the Signal suite
 
 - **[WorthSignal](https://github.com/UlrikErlingsen/customer-value-analytics)** asks what customers and relationships are worth.
 - **[SegmentSignal](https://github.com/UlrikErlingsen/customer-segmentation)** asks whether customers form stable, useful groups.
@@ -175,9 +178,12 @@ The suite checks reverse keying, range and response audits, known synthetic fact
 - **[GateSignal](https://github.com/UlrikErlingsen/launch-decision-gate)** asks whether a concept deserves the next bounded investment.
 - **[ExperimentSignal](https://github.com/UlrikErlingsen/experiment-analysis)** asks whether an assigned treatment caused a practically meaningful change.
 - **[TextSignal](https://github.com/UlrikErlingsen/open-text-analysis)** asks what recurring language patterns appear in open-ended responses.
+- **[RecommendSignal](https://github.com/UlrikErlingsen/recommender-evaluation)** compares recommendation policies offline before a finalist is tested live.
 - **MeasureSignal** asks whether a proposed multi-item score has a defensible exploratory measurement structure.
 
 MeasureSignal comes before DriverSignal when a downstream model depends on a composite score. It diagnoses the measure; DriverSignal analyzes relationships among already defined measures.
+
+The maintained public suite is listed at [ulrikerlingsen.com](https://ulrikerlingsen.com).
 
 ## Method references
 

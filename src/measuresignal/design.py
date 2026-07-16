@@ -18,6 +18,119 @@ class AuditResult:
     warnings: tuple[str, ...]
 
 
+INVARIANCE_LEVELS = (
+    "None established",
+    "Configural structure only",
+    "Metric / loading invariance",
+    "Scalar / threshold invariance",
+    "Strict invariance",
+)
+
+
+@dataclass(frozen=True)
+class ComparabilityResult:
+    status: str
+    meaning: str
+    action: str
+    mean_comparison_allowed: bool
+    group_summary: pd.DataFrame
+    warnings: tuple[str, ...]
+
+
+def assess_score_comparability(
+    frame: pd.DataFrame,
+    *,
+    items: list[str] | tuple[str, ...],
+    group_column: str | None,
+    comparison_intended: bool,
+    evidence_level: str = "None established",
+    evidence_source: str = "",
+) -> ComparabilityResult:
+    """Gate cross-wave/group score-mean claims without pretending to run invariance testing."""
+    if evidence_level not in INVARIANCE_LEVELS:
+        raise DataProblem("Choose a supported measurement-invariance evidence level.")
+    if not comparison_intended:
+        return ComparabilityResult(
+            status="COMPARISON NOT REQUESTED",
+            meaning="The contract does not request a construct-score comparison across waves or groups.",
+            action="Declare the comparison and its grouping variable before interpreting group or wave score differences.",
+            mean_comparison_allowed=False,
+            group_summary=pd.DataFrame(),
+            warnings=("MeasureSignal does not estimate measurement invariance in this release.",),
+        )
+    if not group_column:
+        return ComparabilityResult(
+            status="CROSS-GROUP COMPARISON WITHHELD",
+            meaning="A wave or group comparison is intended, but no comparison column is declared.",
+            action="Declare the wave/group column and document design-matched invariance evidence.",
+            mean_comparison_allowed=False,
+            group_summary=pd.DataFrame(),
+            warnings=("No construct-score means or differences should be interpreted across undeclared groups.",),
+        )
+    if group_column not in frame.columns:
+        raise DataProblem(f"The wave/group column ‘{group_column}’ is not in the data.")
+    missing_items = [item for item in items if item not in frame.columns]
+    if missing_items:
+        raise DataProblem("These comparison items are missing: " + ", ".join(missing_items))
+
+    usable = frame.loc[frame[group_column].notna(), [group_column, *items]].copy()
+    usable[group_column] = usable[group_column].astype(str).str.strip()
+    usable = usable.loc[usable[group_column].ne("")]
+    rows: list[dict[str, object]] = []
+    for group, values in usable.groupby(group_column, sort=True, observed=True):
+        numeric = values[list(items)].apply(pd.to_numeric, errors="coerce")
+        rows.append(
+            {
+                "wave_or_group": str(group),
+                "source_rows": int(len(values)),
+                "complete_item_rows": int(numeric.notna().all(axis=1).sum()),
+                "complete_item_rate": float(numeric.notna().all(axis=1).mean()),
+                "maximum_item_missing_rate": float(numeric.isna().mean().max()),
+            }
+        )
+    group_summary = pd.DataFrame(rows)
+    if len(group_summary) < 2:
+        return ComparabilityResult(
+            status="CROSS-GROUP COMPARISON WITHHELD",
+            meaning="The declared comparison column has fewer than two usable waves or groups.",
+            action="Provide at least two groups and document design-matched invariance evidence before comparing scores.",
+            mean_comparison_allowed=False,
+            group_summary=group_summary,
+            warnings=("No cross-group score comparison is produced.",),
+        )
+
+    scalar_or_strict = evidence_level in {"Scalar / threshold invariance", "Strict invariance"}
+    if scalar_or_strict and evidence_source.strip():
+        return ComparabilityResult(
+            status="EXTERNAL SCALAR INVARIANCE DECLARED",
+            meaning=(
+                "The contract declares external scalar/threshold invariance evidence, the usual minimum for latent or "
+                "construct-mean comparisons. MeasureSignal records but does not verify that evidence."
+            ),
+            action="Check the cited model, estimator, grouping design, partial-invariance decisions, and score recipe before comparison.",
+            mean_comparison_allowed=True,
+            group_summary=group_summary,
+            warnings=(
+                "Permission is based on the user's external evidence declaration; no CFA or invariance test was run here.",
+                "Observed-score comparisons may require additional assumptions beyond latent mean invariance.",
+            ),
+        )
+    return ComparabilityResult(
+        status="CROSS-GROUP COMPARISON WITHHELD",
+        meaning=(
+            "Configural or metric evidence does not establish comparable item intercepts/thresholds, so construct-score "
+            "means and mean differences are withheld."
+        ),
+        action="Establish and document scalar/threshold invariance in a design-matched confirmatory model, or avoid the comparison.",
+        mean_comparison_allowed=False,
+        group_summary=group_summary,
+        warnings=(
+            "MeasureSignal does not calculate or export cross-wave/group construct means while this gate is closed.",
+            "Partial invariance requires a documented expert decision outside this exploratory app.",
+        ),
+    )
+
+
 def orient_items(
     frame: pd.DataFrame,
     *,

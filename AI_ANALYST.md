@@ -45,6 +45,7 @@ Obtain or explicitly label as retrospectively specified:
 - use-specific reliability planning target;
 - minimum proportion answered for an exploratory mean score;
 - independent confirmation and validity plan.
+- whether a cross-wave/group construct-score mean comparison is intended, the group column, strongest external invariance evidence, and its source/model/estimator.
 
 ## Audit
 
@@ -98,6 +99,10 @@ Raw alpha is `k/(k-1) * [1 - sum(item variance)/variance(sum score)]`. Omega tot
 Report corrected item-total correlations and alpha-if-deleted only as sensitivities. Explain that high reliability can reflect redundancy and that low reliability may reflect multidimensionality, broad content, weak items, heterogeneous respondents, or noise.
 
 Propose, but do not validate, simple mean scores from oriented items assigned to their strongest factor and meeting the declared primary-loading rule. Apply the declared minimum-answer proportion. Do not export or reveal row-level answers, identifiers, or scores unless explicitly authorized and privacy-appropriate.
+
+## Cross-wave/group comparability safeguard
+
+Do not run an invariance test under this exploratory protocol. When a cross-wave/group score comparison is intended, report only group row counts, complete-item counts/rates, and maximum item missingness. Do not calculate or report group construct-score means unless the user supplies a documented external scalar/threshold (or strict) invariance result and its source. Configural or metric/loading evidence alone does not clear mean comparison. If scalar evidence is declared, label it `EXTERNAL SCALAR INVARIANCE DECLARED` and state that you recorded rather than verified the evidence; otherwise label the comparison `CROSS-GROUP COMPARISON WITHHELD`.
 
 ## Status and next action
 

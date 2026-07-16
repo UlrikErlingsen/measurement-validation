@@ -36,6 +36,8 @@ def test_demo_analysis_flow_produces_bounded_holdout_status() -> None:
     at.button(key="run_measurement").click().run(timeout=45)
     assert "analysis" in at.session_state
     assert at.session_state["decision"]["status"] == "READY FOR HOLDOUT TEST"
+    assert at.session_state["comparability"].status == "CROSS-GROUP COMPARISON WITHHELD"
+    assert at.session_state["comparability"].mean_comparison_allowed is False
 
     at.radio(key="navigation").set_value("3 · Dimensionality").run()
     assert not at.exception

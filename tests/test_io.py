@@ -7,7 +7,7 @@ import zipfile
 import pandas as pd
 
 from measuresignal.analysis import MeasurementConfig, analyze_measure
-from measuresignal.design import audit_measure, classify_profile
+from measuresignal.design import assess_score_comparability, audit_measure, classify_profile
 from measuresignal.examples import demo_dataframe, demo_defaults
 from measuresignal.io import (
     build_evidence_pack,
@@ -52,12 +52,20 @@ def completed_pack() -> dict[str, object]:
         reliability_value=analysis.reliability["omega_total"].dropna().min(),
         reliability_target=0.70,
     )
+    comparability = assess_score_comparability(
+        frame,
+        items=defaults["items"],
+        group_column=defaults["comparison_group"],
+        comparison_intended=True,
+        evidence_level="None established",
+    )
     return build_evidence_pack(
         source={"source_filename": "demo.csv", "source_sha256": "abc"},
         contract=defaults,
         audit=audit,
         analysis=analysis,
         decision=decision,
+        comparability=comparability,
     )
 
 
@@ -84,10 +92,13 @@ def test_evidence_exports_are_readable_and_exclude_raw_respondents() -> None:
     payload = json.loads(json_bytes)
     assert payload["schema"] == "measuresignal.evidence.v1"
     assert "tables" in payload
+    assert payload["tracking_comparability"]["status"] == "CROSS-GROUP COMPARISON WITHHELD"
+    assert "comparison_group_audit" in payload["tables"]
     assert "MS0001" not in json_bytes.decode()
     workbook = pd.ExcelFile(BytesIO(evidence_to_excel(pack)), engine="openpyxl")
     assert "Measurement contract" in workbook.sheet_names
     assert "reliability" in workbook.sheet_names
+    assert "Tracking comparability" in workbook.sheet_names
     with zipfile.ZipFile(BytesIO(evidence_to_csv_zip(pack))) as archive:
         assert "manifest.json" in archive.namelist()
         assert "item_structure.csv" in archive.namelist()

@@ -22,7 +22,12 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from measuresignal import __version__
 from measuresignal.analysis import MeasurementConfig, analyze_measure
-from measuresignal.design import audit_measure, classify_profile
+from measuresignal.design import (
+    INVARIANCE_LEVELS,
+    assess_score_comparability,
+    audit_measure,
+    classify_profile,
+)
 from measuresignal.errors import DataProblem, friendly_message
 from measuresignal.examples import demo_dataframe, demo_defaults, starter_template
 from measuresignal.io import (
@@ -192,7 +197,7 @@ def show_error(exc: Exception) -> None:
 
 
 def reset_results() -> None:
-    for key in ("audit", "analysis", "decision"):
+    for key in ("audit", "analysis", "decision", "comparability"):
         st.session_state.pop(key, None)
 
 
@@ -225,8 +230,8 @@ def masthead() -> None:
 
 def footer() -> None:
     st.markdown(
-        f'<div class="ms-footer">MeasureSignal {__version__} <span>◆</span> local-first <span>◆</span> '
-        "open methods <span>◆</span> validation remains a research program</div>",
+        f'<div class="ms-footer">MeasureSignal v{__version__} <span>◆</span> exploratory measurement evidence; '
+        "comparisons require invariance <span>◆</span> Part of the Signal suite <span>◆</span> AGPL-3.0-or-later</div>",
         unsafe_allow_html=True,
     )
 
@@ -321,6 +326,36 @@ def render_contract() -> None:
         c1, c2 = st.columns(2)
         scale_min = c1.number_input("Response minimum", value=float(current.get("scale_min", 1.0)), step=1.0)
         scale_max = c2.number_input("Response maximum", value=float(current.get("scale_max", 7.0)), step=1.0)
+
+    st.markdown("#### Cross-wave or group comparability")
+    comparison_intended = st.toggle(
+        "I intend to compare this construct score across waves or groups",
+        value=bool(current.get("comparison_intended", False)),
+        help="Mean comparisons require stronger evidence than finding a similar-looking factor pattern.",
+    )
+    comparison_options = ["(no wave/group column)", *columns]
+    current_group = current.get("comparison_group") or "(no wave/group column)"
+    comparison_group = st.selectbox(
+        "Wave or group column",
+        comparison_options,
+        index=select_index(comparison_options, current_group),
+    )
+    invariance_evidence_level = st.selectbox(
+        "Strongest externally established invariance evidence",
+        list(INVARIANCE_LEVELS),
+        index=select_index(list(INVARIANCE_LEVELS), current.get("invariance_evidence_level", "None established")),
+        help="Scalar/threshold invariance is the usual minimum for comparing construct means. This app records but does not test it.",
+    )
+    invariance_evidence_source = st.text_area(
+        "Evidence source, model, estimator, and any partial-invariance decisions",
+        value=str(current.get("invariance_evidence_source", "")),
+        height=72,
+        placeholder="Example: preregistered multi-group CFA report, model specification, date, and decision notes",
+    )
+    st.info(
+        "MeasureSignal does not run CFA or measurement-invariance tests. It withholds cross-wave/group construct-score "
+        "comparisons unless scalar/threshold evidence and its source are explicitly declared."
+    )
 
     st.markdown("#### Construct and intended use")
     construct_name = st.text_input("Construct / instrument name", value=str(current.get("construct_name", "")))
@@ -423,6 +458,10 @@ def render_contract() -> None:
             "intended_use": intended_use,
             "planned_dimensions": planned_dimensions,
             "validation_plan": validation_plan,
+            "comparison_group": None if comparison_group == "(no wave/group column)" else comparison_group,
+            "comparison_intended": bool(comparison_intended),
+            "invariance_evidence_level": invariance_evidence_level,
+            "invariance_evidence_source": invariance_evidence_source,
         }
         reset_results()
         st.success("Measurement contract saved. Continue to the response and item audit.")
@@ -446,6 +485,15 @@ def render_audit() -> None:
             scale_max=float(contract["scale_max"]),
         )
         st.session_state["audit"] = audit
+        comparability = assess_score_comparability(
+            data,
+            items=contract["items"],
+            group_column=contract.get("comparison_group"),
+            comparison_intended=bool(contract.get("comparison_intended", False)),
+            evidence_level=str(contract.get("invariance_evidence_level", "None established")),
+            evidence_source=str(contract.get("invariance_evidence_source", "")),
+        )
+        st.session_state["comparability"] = comparability
     except Exception as exc:
         show_error(exc)
         return
@@ -461,6 +509,23 @@ def render_audit() -> None:
             st.warning(warning)
     else:
         st.success("No automatic range, uniqueness, missingness, endpoint, or response-pattern flag was triggered.")
+
+    st.markdown("#### Cross-wave/group comparability gate")
+    if comparability.mean_comparison_allowed:
+        st.success(f"**{comparability.status}.** {comparability.meaning}")
+    elif bool(contract.get("comparison_intended", False)):
+        st.error(f"**{comparability.status}.** {comparability.meaning}")
+    else:
+        st.info(f"**{comparability.status}.** {comparability.meaning}")
+    st.write(f"**Required next action:** {comparability.action}")
+    if not comparability.group_summary.empty:
+        group_display = comparability.group_summary.copy()
+        for column in ("complete_item_rate", "maximum_item_missing_rate"):
+            group_display[column] = (100 * group_display[column]).round(1)
+        full_width(st.dataframe, group_display, hide_index=True)
+        st.caption("Rates are percentages. No construct-score means or group differences are calculated on this gate.")
+    for warning in comparability.warnings:
+        st.warning(warning)
 
     tab1, tab2 = st.tabs(["Item distributions", "Response completeness"])
     with tab1:
@@ -689,6 +754,7 @@ def render_decision() -> None:
     analysis = st.session_state["analysis"]
     audit = st.session_state["audit"]
     contract = st.session_state["contract"]
+    comparability = st.session_state.get("comparability")
     st.markdown(
         f"""
         <div class="ms-decision"><b>EXPLORATORY EVIDENCE PROFILE</b><h2>{decision['status']}</h2>
@@ -697,12 +763,27 @@ def render_decision() -> None:
         unsafe_allow_html=True,
     )
     st.warning(CAUTION)
+    if comparability is not None:
+        if comparability.mean_comparison_allowed:
+            st.success(f"**Tracking comparability: {comparability.status}.** {comparability.meaning}")
+        elif bool(contract.get("comparison_intended", False)):
+            st.error(
+                f"**Tracking comparability: {comparability.status}.** Cross-wave/group construct-score means and "
+                "differences must not be interpreted or exported from this workflow."
+            )
     confirmations = pd.DataFrame(
         [
             {"research condition": "Construct and boundaries documented", "documented": bool(contract.get("construct_definition"))},
             {"research condition": "Target population and use documented", "documented": bool(contract.get("target_population") and contract.get("intended_use"))},
             {"research condition": "Dimensions declared before result", "documented": bool(contract.get("planned_dimensions"))},
             {"research condition": "Independent confirmation plan documented", "documented": bool(contract.get("validation_plan"))},
+            {
+                "research condition": "Cross-wave/group mean comparison cleared by declared scalar evidence",
+                "documented": (
+                    not bool(contract.get("comparison_intended", False))
+                    or bool(comparability and comparability.mean_comparison_allowed)
+                ),
+            },
         ]
     )
     full_width(st.dataframe, confirmations, hide_index=True)
@@ -715,6 +796,7 @@ def render_decision() -> None:
         audit=audit,
         analysis=analysis,
         decision=decision,
+        comparability=comparability,
     )
     st.markdown("#### Privacy-minimized evidence pack")
     st.write(
@@ -757,7 +839,7 @@ def render_methods() -> None:
 
         ### Data and correlation model
 
-        Version 1.0 uses rows complete on every selected item for factor analysis and reliability estimation; the audit
+        Version 1.1 uses rows complete on every selected item for factor analysis and reliability estimation; the audit
         separately retains all rows to show missingness. Reverse keying is declared from instrument design and applies
         `minimum + maximum - response`. Pearson treats response categories as approximately interval. Spearman replaces
         values by ranks. Neither option is a polychoric correlation model.
@@ -797,11 +879,11 @@ def render_methods() -> None:
         candidate-score omega total when no subscale exists) to reach the declared target and means only that the
         exploratory recipe is coherent enough to pre-specify for new data—it is not a validity label.
 
-        ### Explicit non-support in version 1.0
+        ### Explicit non-support in version 1.1
 
         This release does not implement confirmatory factor analysis, bifactor or higher-order models, categorical/ordinal
         latent-variable estimators, polychoric/tetrachoric correlations, item-response theory, differential item
-        functioning, measurement invariance, survey weights, complex samples, multilevel or longitudinal measurement,
+        functioning, measurement-invariance estimation, survey weights, complex samples, multilevel or longitudinal measurement,
         test-retest or inter-rater reliability, generalizability theory, planned missing-data estimators, imputation,
         predictive validity, known-groups validation, or automatic item generation/deletion.
 

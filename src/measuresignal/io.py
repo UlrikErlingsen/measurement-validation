@@ -122,8 +122,32 @@ def build_evidence_pack(
     audit,
     analysis,
     decision: dict[str, str],
+    comparability=None,
 ) -> dict[str, object]:
     """Build a privacy-minimized record without row-level responses or scores."""
+    tables = {
+        "item_audit": audit.item_audit,
+        "response_audit": audit.response_audit,
+        "correlation_matrix": analysis.correlation_matrix,
+        "parallel_analysis": analysis.retention,
+        "item_structure": analysis.item_structure,
+        "factor_summary": analysis.factor_summary,
+        "factor_correlations": analysis.factor_correlations,
+        "reliability": analysis.reliability,
+        "item_reliability": analysis.item_reliability,
+        "score_summary": analysis.score_summary,
+    }
+    comparability_record = None
+    if comparability is not None:
+        comparability_record = {
+            "status": comparability.status,
+            "meaning": comparability.meaning,
+            "action": comparability.action,
+            "mean_comparison_allowed": comparability.mean_comparison_allowed,
+            "warnings": list(comparability.warnings),
+        }
+        if not comparability.group_summary.empty:
+            tables["comparison_group_audit"] = comparability.group_summary
     return {
         "schema": "measuresignal.evidence.v1",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -144,18 +168,8 @@ def build_evidence_pack(
         "analysis_diagnostics": analysis.diagnostics,
         "analysis_warnings": list(analysis.warnings),
         "decision": decision,
-        "tables": {
-            "item_audit": audit.item_audit,
-            "response_audit": audit.response_audit,
-            "correlation_matrix": analysis.correlation_matrix,
-            "parallel_analysis": analysis.retention,
-            "item_structure": analysis.item_structure,
-            "factor_summary": analysis.factor_summary,
-            "factor_correlations": analysis.factor_correlations,
-            "reliability": analysis.reliability,
-            "item_reliability": analysis.item_reliability,
-            "score_summary": analysis.score_summary,
-        },
+        "tracking_comparability": comparability_record,
+        "tables": tables,
         "privacy_note": "No respondent-level answers, identifiers, or scores are included.",
     }
 
@@ -193,6 +207,7 @@ def evidence_to_excel(pack: dict[str, object]) -> bytes:
         "Audit summary": pack.get("audit_summary", {}),
         "Diagnostics": pack.get("analysis_diagnostics", {}),
         "Decision": pack.get("decision", {}),
+        "Tracking comparability": pack.get("tracking_comparability") or {},
     }
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
         for name, values in flat_sections.items():

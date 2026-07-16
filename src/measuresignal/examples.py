@@ -79,11 +79,18 @@ def demo_defaults() -> dict[str, object]:
         "intended_use": "Research-stage subscale scores; no individual classification or high-stakes decision",
         "planned_dimensions": "Traceability; Interpretability; Actionability",
         "validation_plan": "Freeze the exploratory recipe, then evaluate it in an independent holdout sample.",
+        "comparison_group": "collection_wave",
+        "comparison_intended": True,
+        "invariance_evidence_level": "None established",
+        "invariance_evidence_source": "",
     }
 
 
 def starter_template(rows: int = 12) -> pd.DataFrame:
-    data: dict[str, object] = {"respondent_id": [f"R{index:03d}" for index in range(1, rows + 1)]}
+    data: dict[str, object] = {
+        "respondent_id": [f"R{index:03d}" for index in range(1, rows + 1)],
+        "collection_wave": ["Wave 1"] * rows,
+    }
     for index in range(1, 9):
         data[f"item_{index}"] = [np.nan] * rows
     return pd.DataFrame(data)

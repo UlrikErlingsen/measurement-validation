@@ -40,7 +40,7 @@ The exploratory model represents the item correlation matrix as:
 
 `R = L Phi L' + Psi`
 
-where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.0 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
+where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.1 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
 
 An item is assigned descriptively to the factor with its largest absolute pattern loading. A primary loading is supported when it meets the declared loading threshold. A cross-loading is flagged when a second absolute loading reaches the declared cross-loading threshold. A factor has minimum coverage when at least three items meet the primary threshold. These are transparent workflow rules, not automatic item-retention commands.
 
@@ -71,6 +71,12 @@ Corrected item–total correlations relate each item to the sum of the other ite
 Items whose strongest loading reaches the declared primary threshold are grouped by that strongest factor. The proposed factor score is the mean of oriented assigned items when a respondent answered at least the declared proportion. An overall candidate score is the mean of all oriented candidate items under the same rule. The app reports only aggregate score summaries and does not export respondent scores.
 
 This recipe is a proposal generated in the discovery sample. Before operational use, freeze wording, keying, factor membership, missing-item handling, transformations, and interpretation, then evaluate them on independent data. Factor-score or latent-variable estimates may be preferable for some uses.
+
+## Cross-wave/group comparability gate
+
+MeasureSignal does not fit multi-group CFA or test invariance. When a cross-wave or group score comparison is intended, it audits group row counts, complete-item rates, and maximum item missingness but calculates no group construct means. The gate remains `CROSS-GROUP COMPARISON WITHHELD` unless the user declares scalar/threshold (or strict) invariance evidence and supplies its source.
+
+Configural evidence supports a similar broad pattern; metric/loading invariance supports some relationship comparisons. Construct or latent mean comparisons usually require equal item intercepts for continuous indicators or thresholds for categorical indicators. Even declared scalar evidence may be partial, estimator-specific, and conditional on identification, sampling, item wording, response scales, and model fit. The status `EXTERNAL SCALAR INVARIANCE DECLARED` records a user-supplied claim; it is not software verification and may not be sufficient for observed unit-weighted score means.
 
 ## Evidence-profile logic
 
