@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">MeasureSignal mark</title>
+  <desc id="desc">Three latent dimensions connected to a lattice of measured items.</desc>
+  <rect width="96" height="96" rx="24" fill="#173C3A"/>
+  <g fill="none" stroke="#83D2B4" stroke-width="2.5" opacity=".68">
+    <path d="M28 26l20 10 20-10M28 48l20 0 20 0M28 70l20-10 20 10"/>
+    <path d="M28 26v44M48 36v24M68 26v44"/>
+  </g>
+  <g fill="#F8F5ED">
+    <circle cx="28" cy="26" r="5"/><circle cx="48" cy="36" r="5"/><circle cx="68" cy="26" r="5"/>
+    <circle cx="28" cy="48" r="5"/><circle cx="48" cy="48" r="5"/><circle cx="68" cy="48" r="5"/>
+    <circle cx="28" cy="70" r="5"/><circle cx="48" cy="60" r="5"/><circle cx="68" cy="70" r="5"/>
+  </g>
+  <circle cx="28" cy="48" r="5" fill="#83D2B4"/>
+  <circle cx="48" cy="48" r="5" fill="#F2C66D"/>
+  <circle cx="68" cy="48" r="5" fill="#D95B40"/>
+</svg>
