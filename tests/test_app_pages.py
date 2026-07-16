@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from streamlit.testing.v1 import AppTest
 
+from measuresignal.examples import COMMUNICATION_TEMPLATE, demo_defaults
+
 
 def app() -> AppTest:
     return AppTest.from_file("app.py", default_timeout=45).run()
@@ -27,6 +29,26 @@ def test_every_page_renders_with_fictional_demo() -> None:
     ]:
         at.radio(key="navigation").set_value(page).run()
         assert not at.exception, page
+
+
+def test_blank_template_leaves_saved_contract_unchanged() -> None:
+    at = app()
+    at.button(key="load_demo").click().run()
+    at.radio(key="navigation").set_value("1 · Measurement contract").run()
+    at.selectbox(key="contract_template").set_value("Blank").run()
+    assert not at.exception
+    assert at.session_state["contract"] == demo_defaults()
+
+
+def test_communication_template_prefills_contract_page_without_saving() -> None:
+    at = app()
+    at.button(key="load_demo").click().run()
+    at.radio(key="navigation").set_value("1 · Measurement contract").run()
+    at.selectbox(key="contract_template").set_value(COMMUNICATION_TEMPLATE).run()
+    assert not at.exception
+    assert any(text_input.value == "Communication response" for text_input in at.text_input)
+    assert any(number_input.value == 4 for number_input in at.number_input)
+    assert at.session_state["contract"] == demo_defaults()
 
 
 def test_demo_analysis_flow_produces_bounded_holdout_status() -> None:

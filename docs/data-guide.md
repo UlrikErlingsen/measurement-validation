@@ -41,7 +41,7 @@ The exploratory score recipe is different from the model sample rule. It can req
 
 Pearson correlations treat response differences as approximately interval-scaled. Spearman correlations use ranks and are less sensitive to monotonic nonlinear spacing, but they are not polychoric correlations and do not create a categorical latent-variable model. Either choice needs a reason tied to the response format and intended interpretation.
 
-Avoid silently converting text labels with an arbitrary alphabetical order. Map ordered categories to documented numeric codes before upload. Binary items, sparse ordered categories, nominal indicators, and mixed item types require methods outside version 1.1.
+Avoid silently converting text labels with an arbitrary alphabetical order. Map ordered categories to documented numeric codes before upload. Binary items, sparse ordered categories, nominal indicators, and mixed item types require methods outside version 1.2.
 
 ## What this release does not ingest correctly
 

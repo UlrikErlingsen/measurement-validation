@@ -6,6 +6,12 @@ MeasureSignal is a bounded exploratory diagnostic for multi-item scores. It asks
 
 The measurement contract is recorded before modeling: construct definition and exclusions, population, context, intended and excluded uses, planned dimensions, response range, keying, item set, correlation method, loading rules, reliability planning target, scoring completeness rule, and confirmation plan. Thresholds are declared decision rules, not universal laws.
 
+### Communication-measurement starter template
+
+The contract page offers an optional prefill template for a communication (advertising) measurement study. It plans four correlated dimensions drawn from the advertising-pretesting literature: awareness of the campaign or brand, attitude toward the ad, brand attitude and brand fit, and persuasion expressed as purchase or usage intention (MacKenzie & Lutz, 1989). These responses are theoretically distinct but causally linked — ad liking is expected to feed brand attitude and intention — so the template plans oblique (oblimin) rotation and factors that may correlate, rather than forcing independence.
+
+The template only prefills wording, endpoints (1–7), the planned factor count (4), and standard thresholds; every field stays editable and item selection remains the user's decision. One honest caveat: awareness is often measured with a single recall/recognition question or a near-binary item. Single-item and near-binary awareness measures often do not belong in an EFA battery built on product-moment correlations — report them separately instead of forcing them into the factor model.
+
 ## Orientation and analysis sample
 
 For declared minimum `a`, maximum `b`, and reverse-keyed response `x`, the oriented response is `a + b - x`. Forward-keyed items are unchanged. Modeling stops when an observed response is outside `[a, b]`, an item is constant, fewer than `max(50, item count + 10)` complete rows remain, or the correlation matrix is singular or nearly singular.
@@ -40,7 +46,7 @@ The exploratory model represents the item correlation matrix as:
 
 `R = L Phi L' + Psi`
 
-where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.1 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
+where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.2 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
 
 An item is assigned descriptively to the factor with its largest absolute pattern loading. A primary loading is supported when it meets the declared loading threshold. A cross-loading is flagged when a second absolute loading reaches the declared cross-loading threshold. A factor has minimum coverage when at least three items meet the primary threshold. These are transparent workflow rules, not automatic item-retention commands.
 
@@ -78,6 +84,8 @@ MeasureSignal does not fit multi-group CFA or test invariance. When a cross-wave
 
 Configural evidence supports a similar broad pattern; metric/loading invariance supports some relationship comparisons. Construct or latent mean comparisons usually require equal item intercepts for continuous indicators or thresholds for categorical indicators. Even declared scalar evidence may be partial, estimator-specific, and conditional on identification, sampling, item wording, response scales, and model fit. The status `EXTERNAL SCALAR INVARIANCE DECLARED` records a user-supplied claim; it is not software verification and may not be sufficient for observed unit-weighted score means.
 
+More generally, comparing scores across waves, segments, or time assumes measurement invariance — that the items relate to the construct in the same way in every group and at every occasion — and this exploratory app does not establish it. A score that moves between waves may reflect a change in the construct, a change in how the items function, or both. Do not read wave-to-wave score movement as construct change until invariance is tested in a confirmatory framework such as multi-group or longitudinal CFA.
+
 ## Evidence-profile logic
 
 Statuses describe the next research step:
@@ -104,3 +112,4 @@ The evidence pack records the contract, selected items and keying, thresholds, c
 - Kaiser, H. F. (1974). An index of factorial simplicity. *Psychometrika, 39*(1), 31–36. https://doi.org/10.1007/BF02291575
 - Bartlett, M. S. (1950). Tests of significance in factor analysis. *British Journal of Statistical Psychology, 3*(2), 77–85. https://doi.org/10.1111/j.2044-8317.1950.tb00285.x
 - McDonald, R. P. (1999). *Test Theory: A Unified Treatment*. Lawrence Erlbaum.
+- MacKenzie, S. B., & Lutz, R. J. (1989). An empirical examination of the structural antecedents of attitude toward the ad in an advertising pretesting context. *Journal of Marketing, 53*(2), 48–65. https://doi.org/10.1177/002224298905300204

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-07-16
+
+- Added an optional "Communication measurement study" contract template (default Blank) that prefills a four-dimension communication-response contract — awareness, attitude toward the ad, brand attitude and brand fit, persuasion/purchase intention — with 1–7 endpoints, four planned correlated factors, and standard thresholds. Prefill only; every field stays editable.
+- Documented the template in methods, README, and the AI analyst protocol, including the caveat that single-item or near-binary awareness measures often do not belong in an EFA battery.
+- Added an explicit cross-wave invariance guard to the scoring page, methods, and AI analyst protocol: wave-to-wave score movement must not be read as construct change until invariance is tested in a confirmatory framework.
+- Added MacKenzie & Lutz (1989) to the cited sources.
+
 ## 1.1.0 — 2026-07-16
 
 - Added a cross-wave/group comparability contract and group-level completeness audit.

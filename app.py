@@ -29,7 +29,14 @@ from measuresignal.design import (
     classify_profile,
 )
 from measuresignal.errors import DataProblem, friendly_message
-from measuresignal.examples import demo_dataframe, demo_defaults, starter_template
+from measuresignal.examples import (
+    BLANK_TEMPLATE,
+    COMMUNICATION_TEMPLATE,
+    contract_template,
+    demo_dataframe,
+    demo_defaults,
+    starter_template,
+)
 from measuresignal.io import (
     build_evidence_pack,
     dataframe_to_xlsx,
@@ -297,6 +304,22 @@ def render_contract() -> None:
     if len(numeric_candidates) < 3:
         st.error("Fewer than three numeric item candidates were detected.")
         return
+
+    st.markdown("#### Start from a template")
+    template_choice = st.selectbox(
+        "Start from a template",
+        [BLANK_TEMPLATE, COMMUNICATION_TEMPLATE],
+        index=0,
+        key="contract_template",
+        help="Templates prefill the wording and settings below; they never choose your item columns.",
+    )
+    if template_choice != BLANK_TEMPLATE:
+        current.update(contract_template(template_choice))
+        st.info(
+            "Template values are prefilled below and every field stays fully editable. Nothing is stored until you "
+            "press **Save measurement contract**. One honest caveat: a single yes/no awareness question is not a "
+            "multi-item scale — keep near-binary awareness measures out of the factor battery and report them separately."
+        )
 
     st.markdown("#### Data roles and keying")
     col1, col2 = st.columns(2)
@@ -742,6 +765,11 @@ def render_reliability() -> None:
         "Unit-weighted mean scores use items assigned to their strongest factor and meeting the declared loading threshold. "
         "Freeze any proposed recipe and test it on new data before operational use. No respondent-level scores are exported."
     )
+    st.caption(
+        "Comparing scores across waves, segments, or time assumes measurement invariance, which this exploratory app "
+        "does not establish. Do not read wave-to-wave score movement as construct change until invariance is tested "
+        "in a confirmatory framework."
+    )
 
 
 def render_decision() -> None:
@@ -839,7 +867,7 @@ def render_methods() -> None:
 
         ### Data and correlation model
 
-        Version 1.1 uses rows complete on every selected item for factor analysis and reliability estimation; the audit
+        Version 1.2 uses rows complete on every selected item for factor analysis and reliability estimation; the audit
         separately retains all rows to show missingness. Reverse keying is declared from instrument design and applies
         `minimum + maximum - response`. Pearson treats response categories as approximately interval. Spearman replaces
         values by ranks. Neither option is a polychoric correlation model.
@@ -879,7 +907,7 @@ def render_methods() -> None:
         candidate-score omega total when no subscale exists) to reach the declared target and means only that the
         exploratory recipe is coherent enough to pre-specify for new data—it is not a validity label.
 
-        ### Explicit non-support in version 1.1
+        ### Explicit non-support in version 1.2
 
         This release does not implement confirmatory factor analysis, bifactor or higher-order models, categorical/ordinal
         latent-variable estimators, polychoric/tetrachoric correlations, item-response theory, differential item
@@ -897,6 +925,7 @@ def render_methods() -> None:
         - Kaiser, H. F. (1974). *An index of factorial simplicity*. Psychometrika, 39(1), 31–36. https://doi.org/10.1007/BF02291575
         - Bartlett, M. S. (1950). *Tests of significance in factor analysis*. British Journal of Statistical Psychology, 3(2), 77–85. https://doi.org/10.1111/j.2044-8317.1950.tb00285.x
         - McDonald, R. P. (1999). *Test Theory: A Unified Treatment*. Lawrence Erlbaum.
+        - MacKenzie, S. B., & Lutz, R. J. (1989). *An empirical examination of the structural antecedents of attitude toward the ad in an advertising pretesting context*. Journal of Marketing, 53(2), 48–65. https://doi.org/10.1177/002224298905300204
         """
     )
     st.info(

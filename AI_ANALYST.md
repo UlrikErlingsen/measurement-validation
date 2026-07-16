@@ -47,6 +47,10 @@ Obtain or explicitly label as retrospectively specified:
 - independent confirmation and validity plan.
 - whether a cross-wave/group construct-score mean comparison is intended, the group column, strongest external invariance evidence, and its source/model/estimator.
 
+### Communication-measurement starter template
+
+When the user is measuring response to a marketing communication and has no contract yet, offer this prefill (everything stays editable): construct "Communication response" with four planned correlated dimensions — awareness, attitude toward the ad, brand attitude and brand fit, and persuasion/purchase intention (MacKenzie & Lutz, 1989); 1–7 response endpoints; four planned factors with oblique rotation because ad liking is expected to feed brand attitude and intention; and the standard thresholds (primary loading 0.40, cross-loading 0.30, reliability target 0.70, minimum answered 0.80). Never choose the item columns for the user. Warn that single-item or near-binary awareness measures often do not belong in an EFA battery; report them separately.
+
 ## Audit
 
 Convert selected items to numeric. Orient a reverse-keyed response `x` on range `[a,b]` as `a + b - x`. Report source and listwise-complete rows; respondent-to-item ratio; repeated or missing selected identifiers; item missingness; values outside range; observed categories; oriented mean, SD, skew, floor and ceiling use; and constant response patterns across at least three answered items.
@@ -102,7 +106,7 @@ Propose, but do not validate, simple mean scores from oriented items assigned to
 
 ## Cross-wave/group comparability safeguard
 
-Do not run an invariance test under this exploratory protocol. When a cross-wave/group score comparison is intended, report only group row counts, complete-item counts/rates, and maximum item missingness. Do not calculate or report group construct-score means unless the user supplies a documented external scalar/threshold (or strict) invariance result and its source. Configural or metric/loading evidence alone does not clear mean comparison. If scalar evidence is declared, label it `EXTERNAL SCALAR INVARIANCE DECLARED` and state that you recorded rather than verified the evidence; otherwise label the comparison `CROSS-GROUP COMPARISON WITHHELD`.
+Do not run an invariance test under this exploratory protocol. When a cross-wave/group score comparison is intended, report only group row counts, complete-item counts/rates, and maximum item missingness. Do not calculate or report group construct-score means unless the user supplies a documented external scalar/threshold (or strict) invariance result and its source. Configural or metric/loading evidence alone does not clear mean comparison. If scalar evidence is declared, label it `EXTERNAL SCALAR INVARIANCE DECLARED` and state that you recorded rather than verified the evidence; otherwise label the comparison `CROSS-GROUP COMPARISON WITHHELD`. Always caveat that comparing scores across waves, segments, or time assumes measurement invariance, which this exploratory protocol does not establish — wave-to-wave score movement must not be read as construct change until invariance is tested in a confirmatory framework.
 
 ## Status and next action
 
@@ -130,3 +134,4 @@ Record source fingerprint, software or package versions, complete measurement co
 - Kaiser, H. F. (1974). An index of factorial simplicity. *Psychometrika, 39*(1), 31–36. https://doi.org/10.1007/BF02291575
 - Bartlett, M. S. (1950). Tests of significance in factor analysis. *British Journal of Statistical Psychology, 3*(2), 77–85. https://doi.org/10.1111/j.2044-8317.1950.tb00285.x
 - McDonald, R. P. (1999). *Test Theory: A Unified Treatment*. Lawrence Erlbaum.
+- MacKenzie, S. B., & Lutz, R. J. (1989). An empirical examination of the structural antecedents of attitude toward the ad in an advertising pretesting context. *Journal of Marketing, 53*(2), 48–65. https://doi.org/10.1177/002224298905300204

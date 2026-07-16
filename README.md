@@ -23,7 +23,7 @@ MeasureSignal never treats high coefficient alpha as proof that items measure on
 
 ## Supported scope
 
-Version 1.1 supports:
+Version 1.2 supports:
 
 - wide data with one row per respondent;
 - 3 to 50 numeric candidate items;
@@ -84,6 +84,8 @@ Before analysis, record:
 - independent confirmation and validity plan.
 
 These fields keep the analysis from silently redefining the construct around whichever items behave best in the current sample.
+
+The contract page includes an optional **Communication measurement study** starter template (default: Blank). It prefills a four-dimension communication-response contract — awareness, attitude toward the ad, brand attitude and brand fit, and persuasion/purchase intention — with a 1–7 response range, four planned correlated factors (oblique rotation), and standard thresholds, following the advertising-pretesting tradition of MacKenzie and Lutz (1989). It is prefill only: every field stays editable, item selection is never automated, and single-item or near-binary awareness measures should be reported separately rather than forced into the factor battery.
 
 ## Dimensionality workflow
 
@@ -195,6 +197,7 @@ The maintained public suite is listed at [ulrikerlingsen.com](https://ulrikerlin
 - Kaiser, H. F. (1974). An index of factorial simplicity. *Psychometrika, 39*(1), 31–36. https://doi.org/10.1007/BF02291575
 - Bartlett, M. S. (1950). Tests of significance in factor analysis. *British Journal of Statistical Psychology, 3*(2), 77–85. https://doi.org/10.1111/j.2044-8317.1950.tb00285.x
 - McDonald, R. P. (1999). *Test Theory: A Unified Treatment*. Lawrence Erlbaum.
+- MacKenzie, S. B., & Lutz, R. J. (1989). An empirical examination of the structural antecedents of attitude toward the ad in an advertising pretesting context. *Journal of Marketing, 53*(2), 48–65. https://doi.org/10.1177/002224298905300204
 
 ## Originality and license
 

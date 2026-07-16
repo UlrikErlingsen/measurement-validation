@@ -86,6 +86,46 @@ def demo_defaults() -> dict[str, object]:
     }
 
 
+COMMUNICATION_TEMPLATE = "Communication measurement study"
+BLANK_TEMPLATE = "Blank"
+CONTRACT_TEMPLATES: dict[str, dict[str, object]] = {
+    COMMUNICATION_TEMPLATE: {
+        "construct_name": "Communication response",
+        "construct_definition": (
+            "Audience response to a marketing communication, covering four related responses: awareness of the "
+            "campaign or brand, attitude toward the ad (liking and credibility of the execution), attitude toward "
+            "the brand including perceived brand fit, and persuasion expressed as purchase or usage intention. "
+            "Media exposure, actual behavior, and sales response are outside the construct."
+        ),
+        "intended_use": (
+            "Intended: aggregate research-stage comparison of communication responses within this sample to inform "
+            "creative and messaging decisions. Excluded: individual-level targeting or profiling, cross-wave "
+            "tracking claims without measurement-invariance evidence, and any high-stakes decision about a person."
+        ),
+        "planned_dimensions": (
+            "Four planned dimensions: (1) awareness, (2) attitude toward the ad, (3) brand attitude and brand fit, "
+            "(4) persuasion / purchase intention. Rationale: advertising-response research treats these as distinct "
+            "but causally linked responses, so they should appear as separate yet correlated factors. Because ad "
+            "liking is expected to feed brand attitude and intention, factors are allowed to correlate (oblique "
+            "rotation) rather than being forced independent."
+        ),
+        "scale_min": 1.0,
+        "scale_max": 7.0,
+        "planned_factors": 4,
+        "correlation": "pearson",
+        "loading_threshold": 0.40,
+        "cross_loading_threshold": 0.30,
+        "reliability_target": 0.70,
+        "minimum_answered": 0.80,
+    },
+}
+
+
+def contract_template(name: str) -> dict[str, object]:
+    """Return a copy of the named contract prefill; Blank or unknown names prefill nothing."""
+    return dict(CONTRACT_TEMPLATES.get(name, {}))
+
+
 def starter_template(rows: int = 12) -> pd.DataFrame:
     data: dict[str, object] = {
         "respondent_id": [f"R{index:03d}" for index in range(1, rows + 1)],
