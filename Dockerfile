@@ -9,7 +9,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-RUN useradd --create-home --uid 10001 measuresignal && chown -R measuresignal:measuresignal /app
+RUN useradd --create-home --uid 10001 measuresignal
 USER measuresignal
 
 EXPOSE 8591

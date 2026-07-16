@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 — 2026-07-16
+
+### Security
+
+- Export sanitizer now also neutralizes formula-like column headers and strips control characters; Docker images keep application code root-owned; defusedxml hardens workbook XML parsing.
+
 ## 1.2.0 — 2026-07-16
 
 - Added an optional "Communication measurement study" contract template (default Blank) that prefills a four-dimension communication-response contract — awareness, attitude toward the ad, brand attitude and brand fit, persuasion/purchase intention — with 1–7 endpoints, four planned correlated factors, and standard thresholds. Prefill only; every field stays editable.
