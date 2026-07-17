@@ -180,7 +180,10 @@ The suite checks reverse keying, range and response audits, known synthetic fact
 - **[GateSignal](https://github.com/UlrikErlingsen/launch-decision-gate)** asks whether a concept deserves the next bounded investment.
 - **[ExperimentSignal](https://github.com/UlrikErlingsen/experiment-analysis)** asks whether an assigned treatment caused a practically meaningful change.
 - **[TextSignal](https://github.com/UlrikErlingsen/open-text-analysis)** asks what recurring language patterns appear in open-ended responses.
+- **[TagSignal](https://github.com/UlrikErlingsen/pricing-analysis)** asks what price range is supported and how unit contribution changes, from assigned-price, historical, or willingness-to-pay evidence.
 - **[RecommendSignal](https://github.com/UlrikErlingsen/recommender-evaluation)** compares recommendation policies offline before a finalist is tested live.
+- **[TraceSignal](https://github.com/UlrikErlingsen/journey-path-analysis)** asks how logged customer journeys actually unfold: transitions, path support, drop-off, and Markov removal sensitivity, with no causal channel credit.
+- **[TrackSignal](https://github.com/UlrikErlingsen/brand-tracking)** asks whether brand measures moved across tracking waves by more than a declared practical threshold.
 - **MeasureSignal** asks whether a proposed multi-item score has a defensible exploratory measurement structure.
 
 MeasureSignal comes before DriverSignal when a downstream model depends on a composite score. It diagnoses the measure; DriverSignal analyzes relationships among already defined measures.
