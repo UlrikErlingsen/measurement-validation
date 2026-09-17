@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from streamlit.testing.v1 import AppTest
 
 from measuresignal.examples import COMMUNICATION_TEMPLATE, demo_defaults
-
+APP = str(Path(__file__).parents[1] / "app.py")
 
 def app() -> AppTest:
-    return AppTest.from_file("app.py", default_timeout=45).run()
+    return AppTest.from_file(APP, default_timeout=45).run()
 
 
 def test_welcome_page_and_brand_are_rendered() -> None:
