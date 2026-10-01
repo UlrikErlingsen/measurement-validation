@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.0 — 2026-10-02
+
+Signal brand refresh and Signal Hub entry point. The analysis, statistics, measurement contract, decision statuses and evidence-pack contents are unchanged.
+
+### Brand
+
+- Display name written **Measure Signal** (with a space) in the app, README, docs, AI analyst protocol, launchers, export labels and metadata. Package, file, schema and environment-variable names stay `measuresignal` / `MEASURESIGNAL_*`.
+- The app uses the shared `signal_theme` module (Organic Signal design, Research family colour `#a06f1f`, Figtree): sidebar lockup, masthead, hero, cards, page headers, notes, footer, Plotly template and the mark as favicon replace the pasted styles.
+- Charts keep their meaning with theme colours: observed eigenvalues as the estimate and the random-data 95th percentile as the dashed threshold; the loading heatmap uses the shared diverging scale around zero; alpha and omega bars use colorway hues.
+- New banner, social preview and marks in `assets/`; the old banner SVG is removed. `.streamlit/config.toml` uses the family colours.
+- README follows the Signal template; bug-report, feature-request and config issue templates added.
+
+### Signal Hub contract
+
+- `measuresignal.ui` exposes `APP_INFO` and `render()`, so Signal Hub can embed the app; `app.py` is now a thin standalone entry point.
+- The fictional demo is preloaded on first run; **Load fictional three-factor demo** restores it.
+- All session-state and widget keys are namespaced `measure:` (the page selector is `measure:page`).
+- `streamlit` and `plotly` moved to a `ui` extra (also in `test`); the analysis core installs without them. `requirements.txt` still lists everything.
+- New tests: no Streamlit/Plotly import outside `measuresignal.ui`, `render()` runs from a script without a page config and from a packaged copy without repo-root files, every widget key is namespaced, the shared shell and README template order.
+- `CITATION.cff` uses the valid `cff-version: 1.2.0`.
+
 ## 1.2.1 — 2026-07-16
 
 ### Security

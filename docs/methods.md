@@ -46,7 +46,7 @@ The exploratory model represents the item correlation matrix as:
 
 `R = L Phi L' + Psi`
 
-where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.2 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
+where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.3 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
 
 An item is assigned descriptively to the factor with its largest absolute pattern loading. A primary loading is supported when it meets the declared loading threshold. A cross-loading is flagged when a second absolute loading reaches the declared cross-loading threshold. A factor has minimum coverage when at least three items meet the primary threshold. These are transparent workflow rules, not automatic item-retention commands.
 
