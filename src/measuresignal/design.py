@@ -1,4 +1,4 @@
-"""Response audit and transparent evidence-profile rules for MeasureSignal."""
+"""Response audit and transparent evidence-profile rules for Measure Signal."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ def assess_score_comparability(
             action="Declare the comparison and its grouping variable before interpreting group or wave score differences.",
             mean_comparison_allowed=False,
             group_summary=pd.DataFrame(),
-            warnings=("MeasureSignal does not estimate measurement invariance in this release.",),
+            warnings=("Measure Signal does not estimate measurement invariance in this release.",),
         )
     if not group_column:
         return ComparabilityResult(
@@ -105,7 +105,7 @@ def assess_score_comparability(
             status="EXTERNAL SCALAR INVARIANCE DECLARED",
             meaning=(
                 "The contract declares external scalar/threshold invariance evidence, the usual minimum for latent or "
-                "construct-mean comparisons. MeasureSignal records but does not verify that evidence."
+                "construct-mean comparisons. Measure Signal records but does not verify that evidence."
             ),
             action="Check the cited model, estimator, grouping design, partial-invariance decisions, and score recipe before comparison.",
             mean_comparison_allowed=True,
@@ -125,7 +125,7 @@ def assess_score_comparability(
         mean_comparison_allowed=False,
         group_summary=group_summary,
         warnings=(
-            "MeasureSignal does not calculate or export cross-wave/group construct means while this gate is closed.",
+            "Measure Signal does not calculate or export cross-wave/group construct means while this gate is closed.",
             "Partial invariance requires a documented expert decision outside this exploratory app.",
         ),
     )

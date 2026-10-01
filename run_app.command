@@ -11,7 +11,7 @@ if [ -f "$PID_FILE" ] && [ -f "$PORT_FILE" ]; then
   EXISTING_PORT="$(/bin/cat "$PORT_FILE")"
   EXISTING_URL="http://127.0.0.1:${EXISTING_PORT}"
   if /bin/kill -0 "$EXISTING_PID" 2>/dev/null && /usr/bin/curl -fsS "${EXISTING_URL}/_stcore/health" >/dev/null 2>&1; then
-    echo "MeasureSignal is already running. Opening it now."
+    echo "Measure Signal is already running. Opening it now."
     if [ "${MEASURESIGNAL_NO_BROWSER:-0}" != "1" ]; then
       /usr/bin/open "$EXISTING_URL"
     fi
@@ -21,14 +21,14 @@ if [ -f "$PID_FILE" ] && [ -f "$PORT_FILE" ]; then
 fi
 
 if ! /usr/bin/env python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
-  echo "MeasureSignal needs Python 3.10 or newer."
+  echo "Measure Signal needs Python 3.10 or newer."
   echo "Install it from https://www.python.org/downloads/ and try again."
   read -r -p "Press Return to close..."
   exit 1
 fi
 
 if [ ! -d ".venv" ]; then
-  echo "Creating MeasureSignal's private Python environment..."
+  echo "Creating Measure Signal's private Python environment..."
   /usr/bin/env python3 -m venv .venv
 fi
 
@@ -38,12 +38,12 @@ export ARROW_DEFAULT_MEMORY_POOL="${ARROW_DEFAULT_MEMORY_POOL:-system}"
 REQUIREMENTS_HASH="$(/usr/bin/shasum -a 256 requirements.txt | /usr/bin/awk '{print $1}')"
 READY_FILE=".venv/.measuresignal-requirements-${REQUIREMENTS_HASH}"
 if [ ! -f "$READY_FILE" ]; then
-  echo "First launch: downloading MeasureSignal's packages. Later launches will be faster."
+  echo "First launch: downloading Measure Signal's packages. Later launches will be faster."
   python -m pip --disable-pip-version-check install --prefer-binary -r requirements.txt
   /bin/rm -f .venv/.measuresignal-requirements-* .venv/.measuresignal-ready
   /usr/bin/touch "$READY_FILE"
 else
-  echo "Using the existing MeasureSignal environment."
+  echo "Using the existing Measure Signal environment."
 fi
 
 if [ -n "${MEASURESIGNAL_PORT:-}" ]; then
@@ -71,7 +71,7 @@ fi
 URL="http://127.0.0.1:${PORT}"
 MAX_UPLOAD_MB="${MEASURESIGNAL_MAX_UPLOAD_MB:-50}"
 
-echo "Starting MeasureSignal at ${URL}..."
+echo "Starting Measure Signal at ${URL}..."
 python -m streamlit run app.py \
   --server.headless=true \
   --server.address=127.0.0.1 \
@@ -96,16 +96,16 @@ ATTEMPT=1
 while [ "$ATTEMPT" -le 120 ]; do
   if /usr/bin/curl -fsS "${URL}/_stcore/health" >/dev/null 2>&1; then
     if [ "${MEASURESIGNAL_NO_BROWSER:-0}" != "1" ]; then
-      echo "MeasureSignal is ready. Opening your browser..."
+      echo "Measure Signal is ready. Opening your browser..."
       /usr/bin/open "$URL"
     else
-      echo "MeasureSignal is ready at ${URL}."
+      echo "Measure Signal is ready at ${URL}."
     fi
     wait "$APP_PID"
     exit $?
   fi
   if ! /bin/kill -0 "$APP_PID" 2>/dev/null; then
-    echo "MeasureSignal stopped before it became ready. Review the message above."
+    echo "Measure Signal stopped before it became ready. Review the message above."
     wait "$APP_PID"
     exit $?
   fi
@@ -113,5 +113,5 @@ while [ "$ATTEMPT" -le 120 ]; do
   /bin/sleep 0.25
 done
 
-echo "MeasureSignal took too long to start. Review the message above, then try again."
+echo "Measure Signal took too long to start. Review the message above, then try again."
 exit 1

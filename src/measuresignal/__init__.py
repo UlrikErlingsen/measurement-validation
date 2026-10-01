@@ -1,3 +1,3 @@
-"""MeasureSignal public package metadata."""
+"""Measure Signal public package metadata."""
 
 __version__ = "1.2.1"

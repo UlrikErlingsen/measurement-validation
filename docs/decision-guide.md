@@ -1,4 +1,4 @@
-# MeasureSignal decision guide
+# Measure Signal decision guide
 
 ## Before reading the correlations
 

@@ -1,4 +1,4 @@
-"""Deterministic, wholly fictional example data for MeasureSignal."""
+"""Deterministic, wholly fictional example data for Measure Signal."""
 
 from __future__ import annotations
 

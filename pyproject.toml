@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "measuresignal"
 version = "1.2.1"
-description = "MeasureSignal: open, local-first exploratory measurement diagnostics"
+description = "Measure Signal: open, local-first exploratory measurement diagnostics"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "AGPL-3.0-or-later"

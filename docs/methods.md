@@ -1,8 +1,8 @@
-# MeasureSignal methods
+# Measure Signal methods
 
 ## Purpose and boundary
 
-MeasureSignal is a bounded exploratory diagnostic for multi-item scores. It asks whether a declared item pool shows enough shared, interpretable structure to justify freezing a scoring proposal for an independent confirmation sample. It does not establish content, response-process, convergent, discriminant, predictive, criterion, known-groups, fairness, or consequential validity.
+Measure Signal is a bounded exploratory diagnostic for multi-item scores. It asks whether a declared item pool shows enough shared, interpretable structure to justify freezing a scoring proposal for an independent confirmation sample. It does not establish content, response-process, convergent, discriminant, predictive, criterion, known-groups, fairness, or consequential validity.
 
 The measurement contract is recorded before modeling: construct definition and exclusions, population, context, intended and excluded uses, planned dimensions, response range, keying, item set, correlation method, loading rules, reliability planning target, scoring completeness rule, and confirmation plan. Thresholds are declared decision rules, not universal laws.
 
@@ -32,7 +32,7 @@ The overall KMO uses the corresponding sums over all off-diagonal pairs. Bartlet
 
 `chi² = -[n - 1 - (2p + 5)/6] ln(|R|)`
 
-with `p(p - 1)/2` degrees of freedom. Both summarize properties of the observed correlation matrix. Neither proves that the construct is valid, that the planned factor count is correct, or that a large sample has substantively useful correlations. MeasureSignal treats overall KMO below 0.50 as a data-limited flag, not as a universal publication rule.
+with `p(p - 1)/2` degrees of freedom. Both summarize properties of the observed correlation matrix. Neither proves that the construct is valid, that the planned factor count is correct, or that a large sample has substantively useful correlations. Measure Signal treats overall KMO below 0.50 as a data-limited flag, not as a universal publication rule.
 
 ## Parallel analysis
 
@@ -80,7 +80,7 @@ This recipe is a proposal generated in the discovery sample. Before operational 
 
 ## Cross-wave/group comparability gate
 
-MeasureSignal does not fit multi-group CFA or test invariance. When a cross-wave or group score comparison is intended, it audits group row counts, complete-item rates, and maximum item missingness but calculates no group construct means. The gate remains `CROSS-GROUP COMPARISON WITHHELD` unless the user declares scalar/threshold (or strict) invariance evidence and supplies its source.
+Measure Signal does not fit multi-group CFA or test invariance. When a cross-wave or group score comparison is intended, it audits group row counts, complete-item rates, and maximum item missingness but calculates no group construct means. The gate remains `CROSS-GROUP COMPARISON WITHHELD` unless the user declares scalar/threshold (or strict) invariance evidence and supplies its source.
 
 Configural evidence supports a similar broad pattern; metric/loading invariance supports some relationship comparisons. Construct or latent mean comparisons usually require equal item intercepts for continuous indicators or thresholds for categorical indicators. Even declared scalar evidence may be partial, estimator-specific, and conditional on identification, sampling, item wording, response scales, and model fit. The status `EXTERNAL SCALAR INVARIANCE DECLARED` records a user-supplied claim; it is not software verification and may not be sufficient for observed unit-weighted score means.
 

@@ -1,4 +1,4 @@
-"""Friendly domain errors for MeasureSignal."""
+"""Friendly domain errors for Measure Signal."""
 
 
 class DataProblem(ValueError):
@@ -10,6 +10,6 @@ def friendly_message(exc: Exception) -> str:
     if isinstance(exc, DataProblem):
         return str(exc)
     if isinstance(exc, (KeyError, ValueError, TypeError)):
-        return f"MeasureSignal could not complete that request: {exc}"
-    return "MeasureSignal hit an unexpected problem. Check the data roles and try again."
+        return f"Measure Signal could not complete that request: {exc}"
+    return "Measure Signal hit an unexpected problem. Check the data roles and try again."
 

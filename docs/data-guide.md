@@ -1,4 +1,4 @@
-# MeasureSignal data guide
+# Measure Signal data guide
 
 ## One row, one respondent
 
@@ -23,7 +23,7 @@ Example layout:
 
 Declare the minimum and maximum values that were actually offered to respondents. A seven-point scale coded 1 through 7 has minimum 1 and maximum 7 even when no one chose every category.
 
-Mark reverse-keyed items from the questionnaire key, not from the observed correlations. MeasureSignal orients a declared reverse-keyed item as:
+Mark reverse-keyed items from the questionnaire key, not from the observed correlations. Measure Signal orients a declared reverse-keyed item as:
 
 `oriented response = minimum + maximum - original response`
 

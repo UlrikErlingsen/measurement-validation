@@ -1,17 +1,20 @@
 <p align="center">
-  <img src="assets/measuresignal-banner.svg" alt="MeasureSignal — is this score measuring what you think it is?" width="100%">
+  <img src="assets/measuresignal-banner.png" alt="Measure Signal: Is this score measuring what you think it is?" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://github.com/UlrikErlingsen/measurement-validation/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/UlrikErlingsen/measurement-validation/actions/workflows/tests.yml/badge.svg"></a>
-  <img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-173C3A?logo=python&logoColor=white">
-  <img alt="Streamlit" src="https://img.shields.io/badge/Streamlit-app-D95B40?logo=streamlit&logoColor=white">
-  <a href="LICENSE"><img alt="License: AGPL-3.0-or-later" src="https://img.shields.io/badge/License-AGPL--3.0--or--later-36534E"></a>
+  <a href="https://github.com/UlrikErlingsen/measurement-validation/actions"><img alt="Tests" src="https://github.com/UlrikErlingsen/measurement-validation/actions/workflows/tests.yml/badge.svg"></a>
+  <a href="https://github.com/UlrikErlingsen/signal-hub"><img alt="Signal · Research" src="https://img.shields.io/badge/Signal-Research-a06f1f?labelColor=2e2b25"></a>
+  <img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-2e2b25?logo=python&logoColor=f9f4ed">
+  <img alt="Streamlit" src="https://img.shields.io/badge/Streamlit-app-a06f1f?logo=streamlit&logoColor=f9f4ed">
+  <a href="LICENSE"><img alt="License: AGPL-3.0-or-later" src="https://img.shields.io/badge/License-AGPL--3.0--or--later-645c50"></a>
 </p>
 
 <p align="center"><strong>Open measurement evidence — define the score, diagnose its structure, freeze the next confirmation.</strong></p>
 
-**MeasureSignal** helps researchers, analysts, and insight teams examine whether a multi-item response battery behaves like a defensible measurement instrument in an exploratory sample. It combines a written measurement contract, response and item audit, factorability diagnostics, parallel analysis, common-factor EFA, reliability estimation, transparent scoring recipes, and a reproducible evidence pack.
+**Measure Signal** helps researchers, analysts, and insight teams examine whether a multi-item response battery behaves like a defensible measurement instrument in an exploratory sample. It combines a written measurement contract, response and item audit, factorability diagnostics, parallel analysis, common-factor EFA, reliability estimation, transparent scoring recipes, and a reproducible evidence pack.
+
+> Is this score measuring what you think it is?
 
 Everything runs locally with open-source Python packages. There is no account, telemetry, external AI call, remote database, or built-in persistence.
 
@@ -19,11 +22,11 @@ Everything runs locally with open-source Python packages. There is no account, t
 
 > **The app diagnoses score behavior; it does not manufacture construct validity.** Content coverage, response process, sampling, external relationships, fairness, and independent confirmation remain part of the research program.
 
-MeasureSignal never treats high coefficient alpha as proof that items measure one construct. Reliability is a property of scores for a population and use. A factor solution discovered in one sample remains exploratory until its scoring rule is frozen and evaluated on new data.
+Measure Signal never treats high coefficient alpha as proof that items measure one construct. Reliability is a property of scores for a population and use. A factor solution discovered in one sample remains exploratory until its scoring rule is frozen and evaluated on new data.
 
-## Supported scope
+## Scope
 
-Version 1.2 supports:
+**Version 1.3 supports:**
 
 - wide data with one row per respondent;
 - 3 to 50 numeric candidate items;
@@ -41,22 +44,24 @@ Version 1.2 supports:
 - aggregate exploratory mean-score recipes with a declared missing-item rule;
 - a declared cross-wave/group comparison intent, group completeness audit, and scalar-invariance evidence gate.
 
-It does **not** estimate CFA, bifactor/higher-order models, polychoric or tetrachoric correlations, categorical latent-variable models, IRT, DIF, measurement invariance, test-retest or inter-rater reliability, survey weights, complex samples, multilevel/longitudinal measurement, imputation, predictive validity, or automated item selection. It records external invariance evidence and withholds cross-wave/group construct-mean comparisons until scalar/threshold evidence and its source are declared; it does not verify that declaration.
+**It does not** estimate CFA, bifactor/higher-order models, polychoric or tetrachoric correlations, categorical latent-variable models, IRT, DIF, measurement invariance, test-retest or inter-rater reliability, survey weights, complex samples, multilevel/longitudinal measurement, imputation, predictive validity, or automated item selection. It records external invariance evidence and withholds cross-wave/group construct-mean comparisons until scalar/threshold evidence and its source are declared; it does not verify that declaration.
 
-## Try it in three minutes
+Relationships among already defined measures belong in **[Driver Signal](https://github.com/UlrikErlingsen/survey-driver-analysis)**; tracking a documented score across waves belongs in **[Track Signal](https://github.com/UlrikErlingsen/brand-tracking)**.
 
-1. Start the app and click **Load fictional three-factor demo**.
+## Try the demo in three minutes
+
+1. Start the app. The fictional three-factor demo is preloaded; **Load fictional three-factor demo** in the sidebar restores it at any time.
 2. Review the saved contract for an entirely fictional 12-item, three-dimension instrument.
 3. Open the audit to inspect missingness, endpoint use, range violations, respondent uniqueness, and constant patterns.
 4. Read the tracking-comparability gate: the demo intentionally withholds wave comparisons because no scalar-invariance evidence is declared.
 5. Run the declared analysis. Compare the planned three factors with the fixed-seed parallel-analysis signal.
 6. Inspect the oblimin pattern matrix, factor correlations, cross-loadings, communalities, and residuals.
 7. Read alpha with its bootstrap interval beside omega, then review the exploratory scoring recipe.
-8. Export the aggregate evidence record and use it to pre-specify an independent confirmation.
+8. Export the aggregate evidence record as XLSX, CSV-ZIP, or JSON and use it to pre-specify an independent confirmation.
 
 The demonstration is deterministic synthetic data. Its construct, item names, response pattern, and factor structure represent no real respondent, organization, course case, or empirical finding.
 
-## Data layout
+## Data contract
 
 Use one row per respondent and one column per item. CSV, XLSX, and JSON are supported.
 
@@ -67,9 +72,9 @@ Use one row per respondent and one column per item. CSV, XLSX, and JSON are supp
 
 Keep item columns numeric. Leave missing answers blank. Select reverse-keyed items from the questionnaire key, not because their sample correlations point in an inconvenient direction. See the [data guide](docs/data-guide.md).
 
-## Measurement contract
+## Analysis contract
 
-Before analysis, record:
+Before analysis, record the measurement contract:
 
 - construct name, definition, and boundaries;
 - target population and administration context;
@@ -87,21 +92,25 @@ These fields keep the analysis from silently redefining the construct around whi
 
 The contract page includes an optional **Communication measurement study** starter template (default: Blank). It prefills a four-dimension communication-response contract — awareness, attitude toward the ad, brand attitude and brand fit, and persuasion/purchase intention — with a 1–7 response range, four planned correlated factors (oblique rotation), and standard thresholds, following the advertising-pretesting tradition of MacKenzie and Lutz (1989). It is prefill only: every field stays editable, item selection is never automated, and single-item or near-binary awareness measures should be reported separately rather than forced into the factor battery.
 
-## Dimensionality workflow
+## Methods
+
+### Dimensionality workflow
 
 The app first audits the response table. Modeling is withheld for out-of-range responses, too few complete rows, constant items, or a singular correlation matrix.
 
 Parallel analysis compares observed correlation-matrix eigenvalues with random-data eigenvalues. The declared model is then fitted separately as common-factor analysis using principal-axis extraction. Multifactor solutions use oblimin rotation because forcing psychologically or managerially related dimensions to be uncorrelated is often implausible. The app reports pattern loadings and factor correlations explicitly.
 
-Parallel analysis is evidence, not an oracle. Construct theory, item content, model residuals, factor coverage, interpretability, and independent replication remain relevant. See [methods](docs/methods.md).
+Parallel analysis is evidence, not an oracle. Construct theory, item content, model residuals, factor coverage, interpretability, and independent replication remain relevant.
 
-## Reliability and scoring
+### Reliability and scoring
 
 The app reports alpha for comparability, a bootstrap interval for sampling uncertainty, and omega total from the fitted common-factor covariance. Alpha and omega answer related but different questions and both depend on assumptions. High values can reflect redundant items or a long scale.
 
 Exploratory factor-score recipes are simple means of items assigned to their strongest factor and meeting the declared loading threshold. This is an auditable proposal, not a finalized instrument. Freeze the recipe and confirm it before operational use.
 
-## Evidence-profile statuses
+See [methods](docs/methods.md).
+
+## Decision statuses
 
 - **DATA CHECK REQUIRED:** range or repeated-identifier problems must be resolved.
 - **DATA LIMITED:** the bounded complete-sample minimum or KMO does not support a stable exploratory reading.
@@ -111,9 +120,9 @@ Exploratory factor-score recipes are simple means of items assigned to their str
 
 See the [decision guide](docs/decision-guide.md).
 
-## Evidence pack
+## Exports
 
-Excel, CSV-ZIP, and JSON exports include:
+Excel, CSV-ZIP, and JSON evidence packs include:
 
 - source filename, sheet, and SHA-256 fingerprint;
 - the full measurement contract and software version;
@@ -129,9 +138,7 @@ Respondent identifiers, answers, and row-level scores are excluded. Exported tex
 
 You need Python 3.10 or newer and a local copy of this folder.
 
-**macOS:** double-click `run_app.command`.
-
-**Windows:** double-click `run_app.bat`.
+**macOS:** double-click `run_app.command`. **Windows:** double-click `run_app.bat`.
 
 The first launch creates a private `.venv` and downloads open-source dependencies. Later launches reuse it. Or use a terminal:
 
@@ -142,7 +149,7 @@ python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-MeasureSignal prefers local port `8591` and falls back to another free port on macOS. The launcher accepts `MEASURESIGNAL_PORT`, `MEASURESIGNAL_MAX_UPLOAD_MB`, `MEASURESIGNAL_NO_BROWSER`, and `MEASURESIGNAL_DEBUG` environment variables.
+Measure Signal prefers local port `8591` and falls back to another free port on macOS. The launcher accepts `MEASURESIGNAL_PORT`, `MEASURESIGNAL_MAX_UPLOAD_MB`, `MEASURESIGNAL_NO_BROWSER`, and `MEASURESIGNAL_DEBUG` environment variables.
 
 ### Docker
 
@@ -153,11 +160,15 @@ docker run --rm -p 8591:8591 measuresignal
 
 Then open `http://127.0.0.1:8591`. The container runs as a non-root user.
 
+## Privacy
+
+Data entered in the browser is processed by the local Streamlit process and stays there unless you download or otherwise move it. If someone hosts Measure Signal, that operator becomes responsible for transport security, authentication, logs, retention, and applicable privacy obligations. See [PRIVACY.md](PRIVACY.md).
+
 ## No install? Give this file to an AI
 
 [AI_ANALYST.md](AI_ANALYST.md) is a standalone analysis protocol for a capable AI assistant. It contains the same scope limits, calculations, and honesty rules. A local app is the more private option: a cloud AI sees whatever you upload or paste.
 
-## Development checks
+## Development
 
 ```bash
 python -m pip install -e ".[test]"
@@ -166,31 +177,44 @@ python -m ruff check .
 python -m build
 ```
 
-The suite checks reverse keying, range and response audits, known synthetic factor recovery, KMO/Bartlett calculations, deterministic parallel analysis, Pearson and Spearman paths, singular-matrix refusal, alpha/omega output, privacy-minimized exports, safe spreadsheet handling, deterministic examples, and every Streamlit page.
+The analysis core (`measuresignal`) installs without Streamlit or Plotly; the app needs the `ui` extra (`python -m pip install -e ".[ui]"`), and `requirements.txt` lists everything for the launchers and Docker. [Signal Hub](https://github.com/UlrikErlingsen/signal-hub) embeds the app through `measuresignal.ui.render()`.
 
-## Relationship to the Signal suite
+The suite checks reverse keying, range and response audits, known synthetic factor recovery, KMO/Bartlett calculations, deterministic parallel analysis, Pearson and Spearman paths, singular-matrix refusal, alpha/omega output, privacy-minimized exports, safe spreadsheet handling, deterministic examples, the shared Signal shell, every Streamlit page, and the Signal Hub contract (no Streamlit or Plotly import outside `ui/`, `render()` without a page config, namespaced keys, no repo-root files at runtime).
 
-- **[WorthSignal](https://github.com/UlrikErlingsen/customer-value-analytics)** asks what customers and relationships are worth.
-- **[SegmentSignal](https://github.com/UlrikErlingsen/customer-segmentation)** asks whether customers form stable, useful groups.
-- **[ChoiceSignal](https://github.com/UlrikErlingsen/conjoint-analysis)** asks how product attributes drive choice.
-- **[PositionSignal](https://github.com/UlrikErlingsen/brand-positioning)** asks where brands sit relative to competitors.
-- **[AdoptSignal](https://github.com/UlrikErlingsen/adoption-forecasting)** asks when a new product gets adopted.
-- **[AllocSignal](https://github.com/UlrikErlingsen/marketing-mix-allocation)** asks where the next marketing budget should go.
-- **[DriverSignal](https://github.com/UlrikErlingsen/survey-driver-analysis)** asks which measured experiences move with satisfaction.
-- **[GateSignal](https://github.com/UlrikErlingsen/launch-decision-gate)** asks whether a concept deserves the next bounded investment.
-- **[ExperimentSignal](https://github.com/UlrikErlingsen/experiment-analysis)** asks whether an assigned treatment caused a practically meaningful change.
-- **[TextSignal](https://github.com/UlrikErlingsen/open-text-analysis)** asks what recurring language patterns appear in open-ended responses.
-- **[TagSignal](https://github.com/UlrikErlingsen/pricing-analysis)** asks what price range is supported and how unit contribution changes, from assigned-price, historical, or willingness-to-pay evidence.
-- **[RecommendSignal](https://github.com/UlrikErlingsen/recommender-evaluation)** compares recommendation policies offline before a finalist is tested live.
-- **[TraceSignal](https://github.com/UlrikErlingsen/journey-path-analysis)** asks how logged customer journeys actually unfold: transitions, path support, drop-off, and Markov removal sensitivity, with no causal channel credit.
-- **[TrackSignal](https://github.com/UlrikErlingsen/brand-tracking)** asks whether brand measures moved across tracking waves by more than a declared practical threshold.
-- **MeasureSignal** asks whether a proposed multi-item score has a defensible exploratory measurement structure.
+## Where this fits in Signal
 
-MeasureSignal comes before DriverSignal when a downstream model depends on a composite score. It diagnoses the measure; DriverSignal analyzes relationships among already defined measures.
+Measure Signal comes before Driver Signal when a downstream model depends on a composite score. It diagnoses the measure; Driver Signal analyzes relationships among already defined measures.
 
-The maintained public suite is listed at [ulrikerlingsen.com](https://ulrikerlingsen.com).
+- **Measure Signal** asks whether a proposed multi-item score has a defensible exploratory measurement structure.
+- **[Driver Signal](https://github.com/UlrikErlingsen/survey-driver-analysis)** asks which measured experiences move with satisfaction.
+- **[Track Signal](https://github.com/UlrikErlingsen/brand-tracking)** asks whether brand measures moved across tracking waves by more than a declared practical threshold; construct scores it tracks need a recorded measurement-evidence reference such as a Measure Signal record.
+- **[Text Signal](https://github.com/UlrikErlingsen/open-text-analysis)** asks what recurring language patterns appear in open-ended responses.
 
-## Method references
+| App | Asks |
+|---|---|
+| [Track Signal](https://github.com/UlrikErlingsen/brand-tracking) | Is the brand moving, or is the tracker just noisy? |
+| [Position Signal](https://github.com/UlrikErlingsen/brand-positioning) | Where do brands sit relative to competitors? |
+| [Prospect Signal](https://github.com/UlrikErlingsen/b2b-prospecting) | Which Norwegian companies fit the ideal customer? |
+| [Listen Signal](https://github.com/UlrikErlingsen/media-listening) | What are Norwegian media and social channels saying? |
+| [Influence Signal](https://github.com/UlrikErlingsen/influencer-campaigns) | Which creators delivered, and was every post labelled? |
+| [Season Signal](https://github.com/UlrikErlingsen/marketing-calendar) | What does the Norwegian marketing year look like, worked backwards? |
+| [Adopt Signal](https://github.com/UlrikErlingsen/adoption-forecasting) | When will a new product be adopted? |
+| [Worth Signal](https://github.com/UlrikErlingsen/customer-value-analytics) | What are customers and relationships worth? |
+| [Segment Signal](https://github.com/UlrikErlingsen/customer-segmentation) | Do customers form stable, useful groups? |
+| [Trace Signal](https://github.com/UlrikErlingsen/journey-path-analysis) | How do logged customer journeys actually unfold? |
+| [Recommend Signal](https://github.com/UlrikErlingsen/recommender-evaluation) | Which recommendation policy should be tested live? |
+| [Choice Signal](https://github.com/UlrikErlingsen/conjoint-analysis) | How do product attributes drive choice? |
+| [Driver Signal](https://github.com/UlrikErlingsen/survey-driver-analysis) | Which measured experiences move with satisfaction? |
+| [Measure Signal](https://github.com/UlrikErlingsen/measurement-validation) | Does a multi-item score have a defensible structure? |
+| [Text Signal](https://github.com/UlrikErlingsen/open-text-analysis) | What recurring patterns appear in open-ended responses? |
+| [Tag Signal](https://github.com/UlrikErlingsen/pricing-analysis) | What price range is supported, and how does profit move? |
+| [Experiment Signal](https://github.com/UlrikErlingsen/experiment-analysis) | Did the treatment cause a practically meaningful change? |
+| [Gate Signal](https://github.com/UlrikErlingsen/launch-decision-gate) | Does a concept deserve the next investment? |
+| [Alloc Signal](https://github.com/UlrikErlingsen/marketing-mix-allocation) | Where should the next marketing budget go? |
+
+The maintained public suite is listed at [ulrikerlingsen.com](https://ulrikerlingsen.com) and in [Signal Hub](https://github.com/UlrikErlingsen/signal-hub).
+
+## References
 
 - Horn, J. L. (1965). A rationale and test for the number of factors in factor analysis. *Psychometrika, 30*, 179–185. https://doi.org/10.1007/BF02289447
 - Fabrigar, L. R., Wegener, D. T., MacCallum, R. C., & Strahan, E. J. (1999). Evaluating the use of exploratory factor analysis in psychological research. *Psychological Methods, 4*, 272–299. https://doi.org/10.1037/1082-989X.4.3.272
@@ -204,8 +228,15 @@ The maintained public suite is listed at [ulrikerlingsen.com](https://ulrikerlin
 
 ## Originality and license
 
-MeasureSignal is an independent implementation based on public statistical literature and original synthetic examples. It does not reproduce lecture slides, institution-specific cases, teaching diagrams, exercises, exam questions, screenshots, tables, or any institution-specific teaching material. See [sources and originality](docs/sources-and-originality.md).
+Measure Signal is an independent implementation based on public statistical literature and original synthetic examples. It does not reproduce lecture slides, institution-specific cases, teaching diagrams, exercises, exam questions, screenshots, tables, or any institution-specific teaching material. See [sources and originality](docs/sources-and-originality.md).
 
 The software and documentation are free under **AGPL-3.0-or-later**. The license covers this project's expression, not ownership of published statistical methods.
 
 This application was developed with AI coding assistance and checked through source review, analytical fixtures, deterministic synthetic recovery, automated app tests, and visual inspection. Verify material decisions independently; no warranty is provided.
+
+---
+
+<p>
+  <img src="assets/measuresignal-mark-64.png" width="20" height="20" alt="" align="absmiddle">
+  <strong>Measure Signal</strong> is part of <a href="https://github.com/UlrikErlingsen/signal-hub"><strong>Signal</strong></a>, open marketing-evidence tools by <a href="https://ulrikerlingsen.com">Ulrik Erlingsen</a>.
+</p>

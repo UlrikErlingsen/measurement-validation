@@ -1,4 +1,4 @@
-"""Exploratory dimensionality and score-reliability analysis for MeasureSignal."""
+"""Exploratory dimensionality and score-reliability analysis for Measure Signal."""
 
 from __future__ import annotations
 

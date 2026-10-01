@@ -1,6 +1,6 @@
 cff-version: 1.2.1
-message: "If you use MeasureSignal, please cite this software."
-title: "MeasureSignal"
+message: "If you use Measure Signal, please cite this software."
+title: "Measure Signal"
 type: software
 authors:
   - family-names: "Erlingsen"

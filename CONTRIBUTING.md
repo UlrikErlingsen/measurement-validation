@@ -1,6 +1,6 @@
 # Contributing
 
-MeasureSignal welcomes reproducible bug reports, documentation improvements, analytical fixtures, and narrowly scoped pull requests.
+Measure Signal welcomes reproducible bug reports, documentation improvements, analytical fixtures, and narrowly scoped pull requests.
 
 1. Do not submit confidential or identifiable response data. Use synthetic or openly licensed fixtures.
 2. Open an issue before proposing a new estimand or design family; method names alone are not sufficient scope.
