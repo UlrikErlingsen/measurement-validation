@@ -652,12 +652,12 @@ def render_dimensionality() -> None:
 
 
 def reliability_figure(frame: pd.DataFrame) -> go.Figure:
-    # Categorical pair from the colorway: the Research hue and the Decide hue. The next entry (Brand 600) sits too
-    # close to Research 600 to tell side-by-side bars apart.
+    # Categorical pair from the colorway: the Research hue, then the Decide hue (the colorway puts the most
+    # contrasting family second).
     series = sig.colorway(NS)
     figure = go.Figure()
     figure.add_trace(go.Bar(x=frame["score"], y=frame["alpha"], name="Alpha", marker_color=series[0]))
-    figure.add_trace(go.Bar(x=frame["score"], y=frame["omega_total"], name="Omega total", marker_color=series[4]))
+    figure.add_trace(go.Bar(x=frame["score"], y=frame["omega_total"], name="Omega total", marker_color=series[1]))
     figure.update_layout(
         template=sig.template(NS),
         barmode="group",
