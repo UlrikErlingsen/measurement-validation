@@ -8,7 +8,7 @@ If the same person appears repeatedly or respondents are nested in teams, this r
 
 ## Candidate items
 
-Select 3 to 50 numeric items intended to represent one scale or a related set of dimensions. Keep the original questionnaire wording and item key outside the data file as study documentation. Column names should be unique and interpretable, but they do not need to contain the item text.
+Select three or more numeric items intended to represent one scale or a related set of dimensions. Keep the original questionnaire wording and item key outside the data file as study documentation. Column names should be unique and interpretable, but they do not need to contain the item text.
 
 Do not mix known outcomes, demographics, behavioral variables, attention checks, or unrelated constructs into the candidate item set merely because they are numeric. The item pool should follow the construct definition written before analysis.
 
@@ -58,4 +58,4 @@ The wave/group field is metadata for a comparison safeguard, not an invariance e
 
 ## File handling and privacy
 
-CSV, XLSX, and JSON tables are supported up to 1000 MB (the launcher's `MEASURESIGNAL_MAX_UPLOAD_MB`), 5,000,000 rows, 500 columns, and 300,000,000 cells; CSV is the fastest format for large files. The app reads values, not workbook macros. Analysis is local and in memory. Aggregate evidence exports exclude identifiers, answers, and row-level scores, but their summaries and source fingerprint can still be sensitive; store them according to the study's governance rules.
+CSV, XLSX, and JSON tables have no built-in size limit when the app runs locally (memory is the limit; Streamlit's upload cap is `MEASURESIGNAL_MAX_UPLOAD_MB`, default 10,000 MB); CSV is the fastest format for large files. A public online demo (`SIGNAL_PUBLIC=1`) limits uploads to 50 MB, 250,000 rows, 500 columns, and 50 items. The app reads values, not workbook macros. Analysis is local and in memory. Aggregate evidence exports exclude identifiers, answers, and row-level scores, but their summaries and source fingerprint can still be sensitive; store them according to the study's governance rules.

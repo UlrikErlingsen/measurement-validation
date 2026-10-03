@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .errors import DataProblem
+from .limits import check_items
 
 
 @dataclass(frozen=True)
@@ -144,8 +145,7 @@ def orient_items(
         raise DataProblem("The response maximum must be greater than the response minimum.")
     if len(items) < 3:
         raise DataProblem("Choose at least three candidate scale items.")
-    if len(items) > 50:
-        raise DataProblem("Version 1.0 supports at most 50 items in one measurement model.")
+    check_items(len(items))
     if len(set(items)) != len(items):
         raise DataProblem("Each item may appear only once in the measurement model.")
     missing = [item for item in items if item not in frame.columns]

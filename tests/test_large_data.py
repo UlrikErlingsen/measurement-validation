@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from measuresignal import analysis
-from measuresignal import io as measure_io
+from measuresignal import analysis, limits
 from measuresignal.analysis import MeasurementConfig, analyze_measure
-from measuresignal.errors import DataProblem
+from measuresignal.design import orient_items
+from measuresignal.errors import DataProblem, friendly_message
 from measuresignal.examples import demo_dataframe, demo_defaults
 from measuresignal.io import read_table
 
@@ -31,39 +31,41 @@ def _demo_config(**overrides: object) -> MeasurementConfig:
     return MeasurementConfig(**settings)
 
 
-def test_default_limits_match_the_1000_mb_upload_cap() -> None:
-    assert measure_io.DEFAULT_MAX_UPLOAD_MB == 1000
-    assert measure_io.MAX_ROWS >= 5_000_000
-    assert measure_io.MAX_TOTAL_CELLS >= 50 * measure_io.MAX_ROWS
+def _csv(rows: int) -> bytes:
+    return b"respondent_id,q1,q2,q3\n" + b"1,4,5,6\n2,3,2,7\n" * (rows // 2)
 
 
-def test_launcher_variable_sets_the_in_code_cap(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MEASURESIGNAL_MAX_UPLOAD_MB", "300")
-    assert measure_io._configured_upload_mb() == 300
-    monkeypatch.setenv("MEASURESIGNAL_MAX_UPLOAD_MB", "lots")
-    assert measure_io._configured_upload_mb() == 1000
-
-
-def test_csv_beyond_the_old_250000_row_limit_loads_compactly() -> None:
-    rows = 300_000
-    raw = b"respondent_id,q1,q2,q3\n" + b"1,4,5,6\n2,3,2,7\n" * (rows // 2)
-    frame, source = read_table(raw, "wave.csv")
+def test_local_mode_accepts_input_beyond_the_demo_caps(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SIGNAL_PUBLIC", raising=False)
+    rows = limits.DEMO_MAX_ROWS + 2
+    frame, source = read_table(_csv(rows), "wave.csv")
     assert len(frame) == rows
     assert frame["q1"].dtype == np.int8
     assert source["source_filename"] == "wave.csv"
+    items = [f"q{index}" for index in range(limits.DEMO_MAX_ITEMS + 5)]
+    wide = pd.DataFrame(np.ones((3, len(items))), columns=items)
+    oriented = orient_items(wide, items=items, reversed_items=[], scale_min=1, scale_max=7)
+    assert oriented.shape[1] == limits.DEMO_MAX_ITEMS + 5
+    assert limits.max_items() is None
 
 
-def test_size_message_names_the_limits(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(measure_io, "MAX_ROWS", 3)
-    with pytest.raises(DataProblem, match="at most 3 rows"):
-        read_table(b"a,b\n1,2\n3,4\n5,6\n7,8\n", "survey.csv")
-
-
-def test_one_byte_limit_covers_json(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(measure_io, "MAX_UPLOAD_BYTES", 32)
+def test_public_demo_enforces_its_caps(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SIGNAL_PUBLIC", "1")
+    with pytest.raises(DataProblem, match="public demo"):
+        read_table(_csv(limits.DEMO_MAX_ROWS + 2), "wave.csv")
+    items = [f"q{index}" for index in range(limits.DEMO_MAX_ITEMS + 1)]
+    wide = pd.DataFrame(np.ones((3, len(items))), columns=items)
+    with pytest.raises(DataProblem, match="downloaded app has no built-in limit"):
+        orient_items(wide, items=items, reversed_items=[], scale_min=1, scale_max=7)
+    monkeypatch.setattr(limits, "DEMO_MAX_UPLOAD_MB", 0)
     payload = json.dumps([{"q1": value} for value in range(20)]).encode()
-    with pytest.raises(DataProblem, match="1,000 MB local safety limit"):
+    with pytest.raises(DataProblem, match="larger than 0 MB"):
         read_table(payload, "survey.json")
+    assert limits.max_items() == limits.DEMO_MAX_ITEMS
+
+
+def test_memory_errors_become_a_plain_message() -> None:
+    assert "not enough memory" in friendly_message(MemoryError())
 
 
 def test_wishart_benchmark_matches_row_simulation() -> None:

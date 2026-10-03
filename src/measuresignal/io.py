@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from io import BytesIO
 import json
-import os
 from pathlib import Path
 import platform
 import re
@@ -17,37 +16,14 @@ import numpy as np
 import pandas as pd
 
 from . import __version__
-from .errors import DataProblem
+from .errors import MEMORY_MESSAGE, DataProblem
+from .limits import check_table_shape, check_upload_bytes
 
 
-DEFAULT_MAX_UPLOAD_MB = 1000
-
-
-def _configured_upload_mb() -> int:
-    """Read the launcher's upload cap so the in-code check matches Streamlit's own limit."""
-    try:
-        return max(1, int(os.getenv("MEASURESIGNAL_MAX_UPLOAD_MB", str(DEFAULT_MAX_UPLOAD_MB))))
-    except ValueError:
-        return DEFAULT_MAX_UPLOAD_MB
-
-
-# One byte limit for CSV, XLSX and JSON; Streamlit's maxUploadSize applies the same cap.
-MAX_UPLOAD_MB = _configured_upload_mb()
-MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
-# Respondent rows held in memory. Audit, correlations, EFA, omega, alpha and scoring use every complete row; the
-# alpha bootstrap and the parallel-analysis benchmark switch to large-sample methods (see analysis.py).
-MAX_ROWS = 5_000_000
-MAX_COLUMNS = 500
-MAX_TOTAL_CELLS = 300_000_000
+# Locally there is no size, row, column or cell limit (memory is the limit); a public demo (SIGNAL_PUBLIC=1) applies
+# the caps in limits.py. CSV is read in chunks so a demo cap stops early and numbers are stored compactly.
 CSV_CHUNK_ROWS = 250_000
 ALLOWED_EXTENSIONS = {".csv", ".xlsx", ".json"}
-
-
-def _size_problem() -> DataProblem:
-    return DataProblem(
-        f"This release accepts at most {MAX_ROWS:,} rows, {MAX_COLUMNS:,} columns and {MAX_TOTAL_CELLS:,} cells per "
-        "analysis. Keep only the item, identifier and wave columns you need."
-    )
 
 
 def compact_frame(frame: pd.DataFrame) -> pd.DataFrame:
@@ -72,8 +48,7 @@ def _read_csv(raw: bytes) -> pd.DataFrame:
     with pd.read_csv(BytesIO(raw), chunksize=CSV_CHUNK_ROWS) as reader:
         for chunk in reader:
             rows += len(chunk)
-            if rows > MAX_ROWS or len(chunk.columns) > MAX_COLUMNS or rows * len(chunk.columns) > MAX_TOTAL_CELLS:
-                raise _size_problem()
+            check_table_shape(rows, len(chunk.columns))
             chunks.append(compact_frame(chunk))
     if not chunks:
         raise DataProblem("The uploaded table has no data rows.")
@@ -87,8 +62,7 @@ def _read_csv(raw: bytes) -> pd.DataFrame:
 def _validate_shape(frame: pd.DataFrame) -> pd.DataFrame:
     if frame.empty:
         raise DataProblem("The uploaded table has no data rows.")
-    if len(frame) > MAX_ROWS or len(frame.columns) > MAX_COLUMNS or frame.size > MAX_TOTAL_CELLS:
-        raise _size_problem()
+    check_table_shape(len(frame), len(frame.columns))
     names = [str(column).strip() for column in frame.columns]
     if any(not name for name in names):
         raise DataProblem("Every column needs a non-empty name.")
@@ -103,8 +77,7 @@ def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]
     """Read one CSV, XLSX, or JSON table and return source metadata."""
     if not raw:
         raise DataProblem("The uploaded file is empty.")
-    if len(raw) > MAX_UPLOAD_BYTES:
-        raise DataProblem(f"The uploaded file exceeds Measure Signal's {MAX_UPLOAD_MB:,} MB local safety limit.")
+    check_upload_bytes(len(raw))
     extension = Path(filename).suffix.casefold()
     if extension not in ALLOWED_EXTENSIONS:
         raise DataProblem("Use CSV, XLSX, or JSON for response data.")
@@ -129,9 +102,7 @@ def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]
     except DataProblem:
         raise
     except MemoryError as exc:
-        raise DataProblem(
-            "The file does not fit in the memory available to Measure Signal. Keep only the needed columns or save it as CSV."
-        ) from exc
+        raise DataProblem(MEMORY_MESSAGE) from exc
     except Exception as exc:
         raise DataProblem(f"The {extension[1:].upper()} file could not be read as a rectangular table.") from exc
     return _validate_shape(frame), {

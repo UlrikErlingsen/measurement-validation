@@ -27,6 +27,7 @@ from measuresignal.design import (
     classify_profile,
 )
 from measuresignal.errors import DataProblem, friendly_message
+from measuresignal.limits import max_items
 from measuresignal.examples import (
     BLANK_TEMPLATE,
     COMMUNICATION_TEMPLATE,
@@ -229,10 +230,10 @@ def render_contract() -> None:
         )
         default_items = [item for item in current.get("items", []) if item in numeric_candidates]
         items = st.multiselect(
-            "Candidate scale items · choose 3–50",
+            "Candidate scale items · choose at least 3",
             numeric_candidates,
             default=default_items,
-            max_selections=50,
+            max_selections=max_items(),
             key=k(f"contract_items:{form}"),
         )
     with col2:
@@ -925,7 +926,7 @@ PAGES = {
 
 
 def _read_upload(upload) -> None:
-    # The uploader keeps its file across reruns; skip re-reading and re-hashing up to 1000 MB when it is unchanged.
+    # The uploader keeps its file across reruns; skip re-reading and re-hashing a large file when it is unchanged.
     token = (getattr(upload, "file_id", None), upload.name, getattr(upload, "size", None))
     if token[0] is not None and token == st.session_state.get(k("upload_token")):
         return
