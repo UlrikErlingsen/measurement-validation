@@ -14,6 +14,21 @@ from .design import orient_items
 from .errors import DataProblem
 
 
+# Above this many complete rows, parallel analysis draws its random correlation matrices from the Wishart
+# distribution of an n-row null sample instead of simulating n × p normal values per replication: identical in
+# distribution for Pearson, the standard large-sample approximation for Spearman, and independent of n in cost.
+PARALLEL_ROW_SIMULATION_LIMIT = 20_000
+# Respondent-by-item cells one alpha bootstrap may resample. Above it, the bootstrap runs on a seeded random
+# subsample and its interval is rescaled to the full sample size (see _bootstrap_alpha).
+BOOTSTRAP_CELL_BUDGET = 50_000_000
+MIN_BOOTSTRAP_SUBSAMPLE = 2_000
+# Above this many complete rows, correlations, alpha, standardized alpha, omega and item diagnostics come from one
+# item covariance matrix accumulated in row chunks, instead of several full centered copies of the item matrix.
+# The estimates are the same; only the memory path differs.
+LARGE_SAMPLE_ROWS = 1_000_000
+COVARIANCE_CHUNK_ROWS = 250_000
+
+
 @dataclass(frozen=True)
 class MeasurementConfig:
     items: tuple[str, ...]
@@ -58,7 +73,7 @@ def _complete_data(frame: pd.DataFrame, config: MeasurementConfig) -> tuple[pd.D
     outside = (oriented.lt(config.scale_min) | oriented.gt(config.scale_max)) & oriented.notna()
     if int(outside.to_numpy().sum()):
         raise DataProblem("Responses outside the declared range must be corrected before modeling.")
-    complete = oriented.dropna().copy()
+    complete = oriented.dropna()
     minimum_rows = max(50, len(config.items) + 10)
     if len(complete) < minimum_rows:
         raise DataProblem(
@@ -70,11 +85,35 @@ def _complete_data(frame: pd.DataFrame, config: MeasurementConfig) -> tuple[pd.D
     return oriented, complete
 
 
+def _covariance(values: np.ndarray) -> np.ndarray:
+    """Sample covariance (ddof=1) of the columns; large inputs are centered chunk by chunk, never copied whole."""
+    n = values.shape[0]
+    if n <= LARGE_SAMPLE_ROWS:
+        return np.atleast_2d(np.cov(values, rowvar=False, ddof=1))
+    mean = values.mean(axis=0)
+    cross = np.zeros((values.shape[1], values.shape[1]))
+    for start in range(0, n, COVARIANCE_CHUNK_ROWS):
+        block = values[start : start + COVARIANCE_CHUNK_ROWS] - mean
+        cross += block.T @ block
+    return cross / (n - 1)
+
+
+def _covariance_to_correlation(covariance: np.ndarray) -> np.ndarray:
+    scale = np.sqrt(np.diag(covariance))
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return covariance / np.outer(scale, scale)
+
+
 def _correlation(data: pd.DataFrame, method: str) -> np.ndarray:
     normalized = method.strip().lower()
     if normalized not in {"pearson", "spearman"}:
         raise DataProblem("Correlation must be Pearson or Spearman.")
-    matrix = data.corr(method=normalized).to_numpy(float)
+    if len(data) > LARGE_SAMPLE_ROWS:
+        # Pearson on average ranks is Spearman's rho, as in pandas; the chunked covariance avoids extra copies.
+        values = (data.rank() if normalized == "spearman" else data).to_numpy(float)
+        matrix = _covariance_to_correlation(_covariance(values))
+    else:
+        matrix = data.corr(method=normalized).to_numpy(float)
     if not np.isfinite(matrix).all():
         raise DataProblem("The item correlation matrix contains undefined values.")
     matrix = (matrix + matrix.T) / 2
@@ -117,27 +156,49 @@ def factorability_diagnostics(correlation: np.ndarray, n: int) -> tuple[float, n
     return overall_kmo, item_kmo, bartlett_chi2, bartlett_p, determinant
 
 
+def _wishart_null_eigenvalues(n: int, p: int, iterations: int, rng: np.random.Generator) -> np.ndarray:
+    """Eigenvalues of null correlation matrices of n independent normal rows, via the Bartlett decomposition.
+
+    The centered cross-product matrix of n rows is Wishart(n - 1, I); its correlation matrix has exactly the
+    distribution of ``np.corrcoef`` on simulated data, at O(p²) cost per replication instead of O(n·p²).
+    """
+    degrees = n - 1
+    factor = np.zeros((iterations, p, p))
+    rows, columns = np.tril_indices(p, k=-1)
+    factor[:, rows, columns] = rng.normal(size=(iterations, len(rows)))
+    diagonal = np.arange(p)
+    factor[:, diagonal, diagonal] = np.sqrt(rng.chisquare(degrees - diagonal, size=(iterations, p)))
+    cross = factor @ np.transpose(factor, (0, 2, 1))
+    scale = np.sqrt(np.einsum("kii->ki", cross))
+    correlation = cross / scale[:, :, None] / scale[:, None, :]
+    return np.linalg.eigvalsh(correlation)[:, ::-1]
+
+
 def parallel_analysis(
     data: pd.DataFrame,
     *,
     method: str,
     iterations: int,
     seed: int,
+    observed_correlation: np.ndarray | None = None,
 ) -> tuple[pd.DataFrame, int]:
     """Horn-style PCA parallel analysis using a 95th-percentile random benchmark."""
     if not 49 <= iterations <= 5000:
         raise DataProblem("Use 49 to 5,000 parallel-analysis replications.")
     n, p = data.shape
-    observed_corr = _correlation(data, method)
+    observed_corr = _correlation(data, method) if observed_correlation is None else observed_correlation
     observed = np.linalg.eigvalsh(observed_corr)[::-1]
-    simulated = np.empty((iterations, p), dtype=float)
     rng = np.random.default_rng(seed)
-    for index in range(iterations):
-        random_data = rng.normal(size=(n, p))
-        if method.lower() == "spearman":
-            random_data = np.apply_along_axis(stats.rankdata, 0, random_data)
-        random_corr = np.corrcoef(random_data, rowvar=False)
-        simulated[index] = np.linalg.eigvalsh(random_corr)[::-1]
+    if n > PARALLEL_ROW_SIMULATION_LIMIT:
+        simulated = _wishart_null_eigenvalues(n, p, iterations, rng)
+    else:
+        simulated = np.empty((iterations, p), dtype=float)
+        for index in range(iterations):
+            random_data = rng.normal(size=(n, p))
+            if method.lower() == "spearman":
+                random_data = np.apply_along_axis(stats.rankdata, 0, random_data)
+            random_corr = np.corrcoef(random_data, rowvar=False)
+            simulated[index] = np.linalg.eigvalsh(random_corr)[::-1]
     random_mean = simulated.mean(axis=0)
     random_95 = np.quantile(simulated, 0.95, axis=0)
     retained = 0
@@ -223,19 +284,46 @@ def _standardized_alpha(matrix: np.ndarray) -> float:
     return float(k * mean_r / denominator) if denominator != 0 else np.nan
 
 
-def _bootstrap_alpha(matrix: np.ndarray, *, iterations: int, seed: int) -> tuple[float, float]:
+def _bootstrap_alpha(
+    matrix: np.ndarray,
+    *,
+    iterations: int,
+    seed: int,
+    columns: list[int] | None = None,
+    full_alpha: float | None = None,
+) -> tuple[float, float, int]:
+    """Percentile bootstrap interval for alpha, plus the number of rows it resampled.
+
+    When ``iterations × rows × items`` exceeds ``BOOTSTRAP_CELL_BUDGET``, the bootstrap resamples a seeded random
+    subsample of ``m`` rows and carries its quantiles ``q`` to the full ``n`` as ``alpha_n + sqrt(m/n)·(q − alpha_m)``
+    (alpha is root-n consistent), so large samples get an interval in seconds instead of hours.
+    """
     if iterations <= 0:
-        return np.nan, np.nan
+        return np.nan, np.nan, 0
+    n = matrix.shape[0]
+    k = matrix.shape[1] if columns is None else len(columns)
+    rows = min(n, max(BOOTSTRAP_CELL_BUDGET // max(iterations * k, 1), MIN_BOOTSTRAP_SUBSAMPLE))
     rng = np.random.default_rng(seed)
+    sample = matrix[np.sort(rng.choice(n, size=rows, replace=False))] if rows < n else matrix
+    if columns is not None:
+        sample = sample[:, columns]
     values = []
     for _ in range(iterations):
-        sampled = matrix[rng.integers(0, matrix.shape[0], matrix.shape[0])]
+        sampled = sample[rng.integers(0, rows, rows)]
         value = _alpha(sampled)
         if np.isfinite(value):
             values.append(value)
     if len(values) < max(20, iterations // 2):
-        return np.nan, np.nan
-    return float(np.quantile(values, 0.025)), float(np.quantile(values, 0.975))
+        return np.nan, np.nan, rows
+    low, high = float(np.quantile(values, 0.025)), float(np.quantile(values, 0.975))
+    if rows < n:
+        full = _alpha(matrix) if full_alpha is None else full_alpha
+        center = _alpha(sample)
+        if not (np.isfinite(full) and np.isfinite(center)):
+            return np.nan, np.nan, rows
+        shrink = math.sqrt(rows / n)
+        low, high = full + shrink * (low - center), full + shrink * (high - center)
+    return low, high, rows
 
 
 def _omega_from_model(loadings: np.ndarray, uniqueness: np.ndarray, phi: np.ndarray) -> float:
@@ -251,22 +339,34 @@ def _omega_from_model(loadings: np.ndarray, uniqueness: np.ndarray, phi: np.ndar
     return float(common / (common + error)) if common + error > 0 else np.nan
 
 
-def _one_factor_omega(matrix: np.ndarray) -> float:
-    if matrix.shape[1] < 2:
+def _one_factor_omega(matrix: np.ndarray | None, correlation: np.ndarray | None = None, n: int = 0) -> float:
+    corr = np.corrcoef(matrix, rowvar=False) if correlation is None else correlation
+    n = matrix.shape[0] if matrix is not None else n
+    if corr.shape[0] < 2:
         return np.nan
-    corr = np.corrcoef(matrix, rowvar=False)
-    if float(np.linalg.eigvalsh(corr).min()) <= 1e-8:
+    if not np.isfinite(corr).all() or float(np.linalg.eigvalsh(corr).min()) <= 1e-8:
         return np.nan
     try:
         loadings, uniqueness, phi = _fit_factor_model(
             corr,
-            items=tuple(f"item_{i}" for i in range(matrix.shape[1])),
-            n=matrix.shape[0],
+            items=tuple(f"item_{i}" for i in range(corr.shape[0])),
+            n=n,
             factors=1,
         )
     except (ValueError, np.linalg.LinAlgError):
         return np.nan
     return _omega_from_model(loadings, uniqueness, phi)
+
+
+def _alpha_from_covariance(covariance: np.ndarray, n: int) -> float:
+    """Raw alpha from the item covariance matrix (identical to ``_alpha`` on the rows)."""
+    if covariance.shape[0] < 2 or n < 3:
+        return np.nan
+    total_variance = float(covariance.sum())
+    if total_variance <= 0:
+        return np.nan
+    k = covariance.shape[0]
+    return float(k / (k - 1) * (1 - float(np.trace(covariance)) / total_variance))
 
 
 def _reliability_row(
@@ -276,20 +376,36 @@ def _reliability_row(
     omega: float,
     bootstrap_iterations: int,
     seed: int,
+    columns: list[int] | None = None,
+    covariance: np.ndarray | None = None,
 ) -> dict[str, object]:
-    alpha_low, alpha_high = _bootstrap_alpha(matrix, iterations=bootstrap_iterations, seed=seed)
-    corr = np.corrcoef(matrix, rowvar=False) if matrix.shape[1] >= 2 else np.array([[1.0]])
-    mean_interitem = (
-        float(np.nanmean(corr[np.triu_indices_from(corr, k=1)])) if matrix.shape[1] >= 2 else np.nan
+    """One reliability row. With ``covariance`` (large samples) the point estimates come from that matrix and the
+    rows of ``matrix[:, columns]`` are touched only by the bootstrap's subsample."""
+    k = matrix.shape[1] if columns is None else len(columns)
+    if covariance is None:
+        corr = np.corrcoef(matrix, rowvar=False) if k >= 2 else np.array([[1.0]])
+        alpha = _alpha(matrix)
+        standardized = _standardized_alpha(matrix)
+    else:
+        corr = _covariance_to_correlation(covariance) if k >= 2 else np.array([[1.0]])
+        alpha = _alpha_from_covariance(covariance, matrix.shape[0])
+        upper = corr[np.triu_indices_from(corr, k=1)]
+        mean_r = float(np.nanmean(upper)) if k >= 2 else np.nan
+        denominator = 1 + (k - 1) * mean_r
+        standardized = float(k * mean_r / denominator) if k >= 2 and denominator != 0 else np.nan
+    mean_interitem = float(np.nanmean(corr[np.triu_indices_from(corr, k=1)])) if k >= 2 else np.nan
+    alpha_low, alpha_high, bootstrap_rows = _bootstrap_alpha(
+        matrix, iterations=bootstrap_iterations, seed=seed, columns=columns, full_alpha=alpha
     )
     return {
         "score": label,
-        "items": int(matrix.shape[1]),
+        "items": int(k),
         "complete_n": int(matrix.shape[0]),
-        "alpha": _alpha(matrix),
+        "alpha": alpha,
         "alpha_bootstrap_low": alpha_low,
         "alpha_bootstrap_high": alpha_high,
-        "standardized_alpha": _standardized_alpha(matrix),
+        "alpha_bootstrap_rows": int(bootstrap_rows),
+        "standardized_alpha": standardized,
         "omega_total": omega,
         "mean_interitem_correlation": mean_interitem,
     }
@@ -305,8 +421,17 @@ def _score_summary(
         if not items:
             continue
         needed = max(1, int(math.ceil(len(items) * minimum_answered)))
-        answered = oriented[items].notna().sum(axis=1)
-        scores = oriented[items].mean(axis=1).where(answered >= needed).dropna()
+        # Row means accumulated one item at a time: memory stays at a few row-length vectors for any sample size.
+        total = np.zeros(len(oriented))
+        answered = np.zeros(len(oriented), dtype=np.int64)
+        for item in items:
+            values = oriented[item].to_numpy(dtype=float)
+            present = ~np.isnan(values)
+            total += np.where(present, values, 0.0)
+            answered += present
+        with np.errstate(invalid="ignore", divide="ignore"):
+            row_means = total / answered
+        scores = pd.Series(row_means[answered >= needed])
         rows.append(
             {
                 "score": label,
@@ -345,6 +470,7 @@ def analyze_measure(frame: pd.DataFrame, config: MeasurementConfig) -> Measureme
         method=config.correlation,
         iterations=config.parallel_iterations,
         seed=config.seed,
+        observed_correlation=correlation,
     )
     loadings, uniqueness, phi = _fit_factor_model(
         correlation,
@@ -403,6 +529,10 @@ def analyze_measure(frame: pd.DataFrame, config: MeasurementConfig) -> Measureme
     )
 
     full_matrix = complete[list(config.items)].to_numpy(float)
+    large_sample = len(full_matrix) > LARGE_SAMPLE_ROWS
+    # Corrected item-total correlations and alpha-if-deleted (and, for large samples, every reliability point
+    # estimate) follow from one item covariance matrix: one pass over the rows instead of one copy per item.
+    covariance = _covariance(full_matrix)
     reliability_rows = [
         _reliability_row(
             "Candidate total (descriptive)",
@@ -410,10 +540,26 @@ def analyze_measure(frame: pd.DataFrame, config: MeasurementConfig) -> Measureme
             omega=_omega_from_model(loadings, uniqueness, phi),
             bootstrap_iterations=config.bootstrap_iterations,
             seed=config.seed + 1000,
+            covariance=covariance if large_sample else None,
         )
     ]
     for factor_number, (label, items) in enumerate(score_groups, start=1):
         if len(items) < 2:
+            continue
+        if large_sample:
+            positions = [config.items.index(item) for item in items]
+            subset = covariance[np.ix_(positions, positions)]
+            reliability_rows.append(
+                _reliability_row(
+                    label,
+                    full_matrix,
+                    omega=_one_factor_omega(None, _covariance_to_correlation(subset), len(full_matrix)),
+                    bootstrap_iterations=config.bootstrap_iterations,
+                    seed=config.seed + 1000 + factor_number,
+                    columns=positions,
+                    covariance=subset,
+                )
+            )
             continue
         matrix = complete[items].to_numpy(float)
         reliability_rows.append(
@@ -429,14 +575,26 @@ def analyze_measure(frame: pd.DataFrame, config: MeasurementConfig) -> Measureme
 
     item_reliability_rows: list[dict[str, object]] = []
     for index, item in enumerate(config.items):
-        other = np.delete(full_matrix, index, axis=1)
-        total_without = other.sum(axis=1)
-        corrected = float(np.corrcoef(full_matrix[:, index], total_without)[0, 1]) if other.shape[1] else np.nan
+        others = [position for position in range(len(config.items)) if position != index]
+        rest = covariance[np.ix_(others, others)]
+        rest_variance = float(rest.sum())
+        item_variance = float(covariance[index, index])
+        corrected = (
+            float(covariance[index, others].sum()) / math.sqrt(item_variance * rest_variance)
+            if rest_variance > 0 and item_variance > 0
+            else np.nan
+        )
+        remaining = len(others)
+        alpha_deleted = (
+            float(remaining / (remaining - 1) * (1 - float(np.trace(rest)) / rest_variance))
+            if remaining >= 2 and rest_variance > 0 and full_matrix.shape[0] >= 3
+            else np.nan
+        )
         item_reliability_rows.append(
             {
                 "item": item,
                 "corrected_item_total_correlation": corrected,
-                "alpha_if_deleted": _alpha(other),
+                "alpha_if_deleted": alpha_deleted,
                 "deletion_is_not_recommendation": True,
             }
         )
@@ -470,6 +628,27 @@ def analyze_measure(frame: pd.DataFrame, config: MeasurementConfig) -> Measureme
     if config.correlation.lower() == "pearson" and max(complete.nunique()) <= 7:
         warnings.append(
             "Pearson correlations treat the selected response categories as approximately interval; few-category ordinal data may need polychoric methods."
+        )
+    parallel_benchmark = (
+        f"Wishart null distribution for n = {len(complete):,} rows ({config.parallel_iterations} draws; exact in "
+        "distribution for Pearson, large-sample approximation for Spearman)"
+        if len(complete) > PARALLEL_ROW_SIMULATION_LIMIT
+        else f"Simulated normal data, n = {len(complete):,} rows ({config.parallel_iterations} replications)"
+    )
+    if len(complete) > PARALLEL_ROW_SIMULATION_LIMIT:
+        warnings.append(
+            f"Parallel analysis: with more than {PARALLEL_ROW_SIMULATION_LIMIT:,} complete rows the random benchmark "
+            "is drawn from the Wishart distribution of a null correlation matrix rather than simulated row by row."
+        )
+    subsampled = reliability.loc[
+        (reliability["alpha_bootstrap_rows"] > 0) & (reliability["alpha_bootstrap_rows"] < reliability["complete_n"])
+    ]
+    if not subsampled.empty:
+        warnings.append(
+            f"Alpha bootstrap: {config.bootstrap_iterations:,} resamples of a seeded random subsample of "
+            f"{int(subsampled['alpha_bootstrap_rows'].min()):,}–{int(subsampled['alpha_bootstrap_rows'].max()):,} "
+            f"of {len(complete):,} complete rows, rescaled to the full sample by sqrt(m/n). Alpha, omega and every "
+            "other estimate use all complete rows."
         )
     warnings.append("Internal consistency and factor structure do not establish content, criterion, convergent, or discriminant validity.")
 
@@ -505,6 +684,12 @@ def analyze_measure(frame: pd.DataFrame, config: MeasurementConfig) -> Measureme
             "correlation_determinant": determinant,
             "correlation_condition_number": float(np.linalg.cond(correlation)),
             "parallel_components_95th_percentile": int(retained),
+            "parallel_benchmark": parallel_benchmark,
+            "alpha_bootstrap_basis": (
+                "Every complete row"
+                if subsampled.empty
+                else "Seeded subsample rescaled by sqrt(m/n) (see reliability.alpha_bootstrap_rows)"
+            ),
             "planned_factors": int(config.planned_factors),
             "loading_support_rate": loading_support_rate,
             "cross_loading_rate": cross_loading_rate,

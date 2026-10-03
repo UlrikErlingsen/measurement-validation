@@ -58,4 +58,4 @@ The wave/group field is metadata for a comparison safeguard, not an invariance e
 
 ## File handling and privacy
 
-CSV, XLSX, and JSON tables are supported up to 50 MB, 250,000 rows, and 500 columns. The app reads values, not workbook macros. Analysis is local and in memory. Aggregate evidence exports exclude identifiers, answers, and row-level scores, but their summaries and source fingerprint can still be sensitive; store them according to the study's governance rules.
+CSV, XLSX, and JSON tables are supported up to 1000 MB (the launcher's `MEASURESIGNAL_MAX_UPLOAD_MB`), 5,000,000 rows, 500 columns, and 300,000,000 cells; CSV is the fastest format for large files. The app reads values, not workbook macros. Analysis is local and in memory. Aggregate evidence exports exclude identifiers, answers, and row-level scores, but their summaries and source fingerprint can still be sensitive; store them according to the study's governance rules.

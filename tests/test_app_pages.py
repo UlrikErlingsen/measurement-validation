@@ -92,3 +92,24 @@ def test_demo_analysis_flow_produces_bounded_holdout_status() -> None:
     body = "\n".join(str(item.value) for item in at.markdown)
     assert "EXPLORATORY EVIDENCE PROFILE" in body
     assert "READY FOR HOLDOUT TEST" in body
+
+
+def test_audit_runs_once_per_data_and_contract(monkeypatch) -> None:
+    # The audit reads every row, so a rerun of the audit page (any widget click) reuses it for large files.
+    from measuresignal.ui import app as ui
+
+    calls = []
+    original = ui.audit_measure
+
+    def counting_audit(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(ui, "audit_measure", counting_audit)
+    at = app()
+    at.radio(key=k("page")).set_value("2 · Response & item audit").run()
+    at.run()
+    assert not at.exception
+    assert len(calls) == 1
+    at.button(key=k("load_demo")).click().run()
+    assert len(calls) == 2  # new data, new audit

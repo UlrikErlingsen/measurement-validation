@@ -155,7 +155,8 @@ def orient_items(
     if invalid_reverse:
         raise DataProblem("Reverse-key selections are not in the item set: " + ", ".join(invalid_reverse))
 
-    oriented = frame[list(items)].apply(pd.to_numeric, errors="coerce")
+    # Float64 for every statistic, whatever compact dtype the upload was stored in.
+    oriented = frame[list(items)].apply(pd.to_numeric, errors="coerce").astype(float)
     empty = [item for item in items if oriented[item].notna().sum() == 0]
     if empty:
         raise DataProblem("These items contain no numeric responses: " + ", ".join(empty))
@@ -214,7 +215,8 @@ def audit_measure(
     # Constant-pattern detection uses the raw (pre-orientation) responses: a respondent
     # who gives the same raw answer to every item is a straightliner even when reverse
     # keying would spread those answers apart after orientation.
-    straightline = original_numeric.nunique(axis=1, dropna=True).eq(1) & enough_for_pattern
+    # Row max equal to row min is the vectorized form of "one distinct answer", fast for millions of rows.
+    straightline = original_numeric.max(axis=1).eq(original_numeric.min(axis=1)) & enough_for_pattern
     response_audit = pd.DataFrame(
         {
             "answered_items": answered.value_counts().sort_index().index.astype(int),

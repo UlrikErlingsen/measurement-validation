@@ -36,7 +36,7 @@ with `p(p - 1)/2` degrees of freedom. Both summarize properties of the observed 
 
 ## Parallel analysis
 
-Horn-style parallel analysis is a retention diagnostic. The app computes the ordered eigenvalues of the observed item correlation matrix, generates independent normal random data with the same number of complete rows and items, and repeats the calculation using a fixed seed. An observed eigenvalue is retained while it exceeds the corresponding 95th percentile of the simulated eigenvalues; counting stops at the first failure. Spearman mode ranks each simulated column before correlation.
+Horn-style parallel analysis is a retention diagnostic. The app computes the ordered eigenvalues of the observed item correlation matrix, generates independent normal random data with the same number of complete rows and items, and repeats the calculation using a fixed seed. An observed eigenvalue is retained while it exceeds the corresponding 95th percentile of the simulated eigenvalues; counting stops at the first failure. Spearman mode ranks each simulated column before correlation. Above 20,000 complete rows, the random correlation matrices are drawn directly from the Wishart distribution of the centered cross-product matrix of `n` independent normal rows (Bartlett decomposition): the same null distribution as simulating the rows for Pearson, and the standard large-sample approximation for Spearman, at a cost that does not grow with `n`. The diagnostics record which benchmark was used (`parallel_benchmark`).
 
 The displayed parallel analysis is deliberately PCA-based because it evaluates total correlation-matrix eigenvalues. It is not the extraction model. The planned common-factor solution is fitted separately. Parallel analysis can be affected by sample size, item distributions, correlation choice, and simulation specification, so theory, factor coverage, residuals, and replication remain relevant.
 
@@ -46,7 +46,7 @@ The exploratory model represents the item correlation matrix as:
 
 `R = L Phi L' + Psi`
 
-where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.3 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
+where `L` is the loading matrix, `Phi` is the factor-correlation matrix, and diagonal `Psi` contains unique variances. Principal-axis extraction starts with squared multiple correlations as initial communalities. Version 1.4 caps the planned factor count at the smaller of 8 or the item count minus one. A multifactor solution uses oblimin rotation (direct quartimin, γ = 0), allowing dimensions to correlate; the app reports the rotated pattern matrix and `Phi`. Factor order and signs are stabilized for reproducible display, but signs and labels have no inherent psychological direction.
 
 An item is assigned descriptively to the factor with its largest absolute pattern loading. A primary loading is supported when it meets the declared loading threshold. A cross-loading is flagged when a second absolute loading reaches the declared cross-loading threshold. A factor has minimum coverage when at least three items meet the primary threshold. These are transparent workflow rules, not automatic item-retention commands.
 
@@ -62,7 +62,7 @@ Standardized alpha uses the mean inter-item correlation `r_bar`:
 
 `alpha_std = k r_bar / [1 + (k - 1) r_bar]`
 
-The app adds a percentile bootstrap interval for raw alpha by resampling complete respondents with replacement using a fixed seed. The interval reflects sampling variability under that resampling scheme; it does not capture construct misspecification or dependence.
+The app adds a percentile bootstrap interval for raw alpha by resampling complete respondents with replacement using a fixed seed. The interval reflects sampling variability under that resampling scheme; it does not capture construct misspecification or dependence. When `replications × n × items` would exceed 50,000,000 cells, the bootstrap resamples a seeded random subsample of `m` complete rows (at least 2,000) and carries its quantiles `q` to the full sample as `alpha_n + sqrt(m/n) · (q − alpha_m)`, which is valid because alpha is root-n consistent; the reliability table records `m` as `alpha_bootstrap_rows` and a warning labels the interval. Above 1,000,000 complete rows, alpha, standardized alpha, omega for the factor scores and the item diagnostics are computed from one chunk-accumulated item covariance matrix; the estimates are unchanged.
 
 Omega total is computed from the fitted common-factor covariance:
 

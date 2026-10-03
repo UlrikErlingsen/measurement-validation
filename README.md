@@ -26,7 +26,7 @@ Measure Signal never treats high coefficient alpha as proof that items measure o
 
 ## Scope
 
-**Version 1.3 supports:**
+**Version 1.4 supports:**
 
 - wide data with one row per respondent;
 - 3 to 50 numeric candidate items;
@@ -149,7 +149,7 @@ python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-Measure Signal prefers local port `8591` and falls back to another free port on macOS. The launcher accepts `MEASURESIGNAL_PORT`, `MEASURESIGNAL_MAX_UPLOAD_MB`, `MEASURESIGNAL_NO_BROWSER`, and `MEASURESIGNAL_DEBUG` environment variables.
+Measure Signal prefers local port `8591` and falls back to another free port on macOS. The launchers accept `MEASURESIGNAL_PORT`, `MEASURESIGNAL_MAX_UPLOAD_MB` (upload cap in MB, default 1000; the app applies the same value), `MEASURESIGNAL_NO_BROWSER`, and `MEASURESIGNAL_DEBUG` environment variables.
 
 ### Docker
 
@@ -158,7 +158,16 @@ docker build -t measuresignal .
 docker run --rm -p 8591:8591 measuresignal
 ```
 
-Then open `http://127.0.0.1:8591`. The container runs as a non-root user.
+Then open `http://127.0.0.1:8591`. The container runs as a non-root user. Its upload cap is `STREAMLIT_SERVER_MAX_UPLOAD_SIZE` (MB, default 1000); lower it for a shared deployment, e.g. `docker run -e STREAMLIT_SERVER_MAX_UPLOAD_SIZE=50 ...`.
+
+## Large files
+
+Uploads can be up to 1000 MB locally (CSV is fastest; XLSX and JSON are read whole into memory), with up to 5,000,000 respondent rows, 500 columns and 300,000,000 cells. Ratings are stored compactly (one byte per answer on a 1–7 scale) and every statistic is computed in double precision. The audit, correlations, KMO/Bartlett, the factor solution, alpha, omega, item diagnostics and scoring use every complete row; above 1,000,000 complete rows they come from one item covariance matrix accumulated in chunks (same estimates, a fraction of the memory). Two simulation steps switch to large-sample methods, labelled in the warnings, diagnostics and evidence pack:
+
+- above 20,000 complete rows, parallel analysis draws its random benchmark from the Wishart distribution of a null correlation matrix instead of simulating every row (identical in distribution for Pearson, the standard large-sample approximation for Spearman);
+- when an alpha bootstrap would resample more than 50,000,000 respondent-by-item cells, it resamples a seeded subsample (at least 2,000 rows) and rescales the interval to the full sample by √(m/n); the reliability table records `alpha_bootstrap_rows`.
+
+On the development laptop a 5,000,000-respondent, 204 MB CSV with 12 items loaded in about 4 seconds; the audit took about 6 seconds and the full analysis (499 parallel-analysis and 499 bootstrap replications) about 6 seconds, at roughly 2.4 GB peak memory. Version 1.3 needed about 90 seconds for 250,000 rows.
 
 ## Privacy
 

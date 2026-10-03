@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.4.0 — 2026-10-03
+
+### Larger datasets
+
+- Larger datasets: uploads up to 1000 MB locally (was 50 MB), up to 5,000,000 rows (was 250,000), 500 columns and a new 300,000,000-cell guard; one byte limit for CSV, XLSX and JSON. CSV is read in 250,000-row chunks and numbers are stored in the smallest lossless type, while every statistic still runs in double precision. Uploaded frames are no longer copied once more after reading.
+- The audit's constant-pattern check is vectorized (row maximum equals row minimum) instead of a row-by-row `nunique`; the same rows are flagged.
+- Parallel analysis above 20,000 complete rows draws its random benchmark from the Wishart distribution of a null correlation matrix (Bartlett decomposition) instead of simulating every row: identical in distribution for Pearson, the standard large-sample approximation for Spearman. The diagnostics (`parallel_benchmark`) and a warning label it. At 5,000,000 rows the full analysis takes about 6 seconds; version 1.3 needed about 90 seconds for 250,000 rows.
+- An alpha bootstrap above 50,000,000 resampled cells uses a seeded subsample of at least 2,000 complete rows and rescales its interval to the full sample by sqrt(m/n). The reliability table (`alpha_bootstrap_rows`), the diagnostics (`alpha_bootstrap_basis`) and a warning record it; point estimates always use every complete row.
+- Item-total correlations and alpha-if-deleted come from one item covariance matrix; above 1,000,000 complete rows the correlation matrix, alpha, standardized alpha, factor-score omega and score means are also computed without full copies of the item matrix (chunked covariance, column-wise row means). Results are unchanged.
+- The app keeps the audit for the current data and contract instead of recomputing it on every rerun, computes the numeric item candidates once per table, and no longer re-reads and re-hashes an unchanged upload on each rerun.
+- Launchers default `MEASURESIGNAL_MAX_UPLOAD_MB` to 1000 (the Windows launcher now honours the variable too), and the app's own check reads the same variable. The Docker image sets `STREAMLIT_SERVER_MAX_UPLOAD_SIZE=1000`. Signal Hub mode is unchanged (the Hub's own cap applies).
+
+### Suite
+
+- Suite: Rival, Reach, Learn and Blueprint Signal added to the suite table (README) and to the theme copy's app list; `.streamlit/config.toml` carries Signal Hub's 1000 MB upload cap.
+
 ## 1.3.0 — 2026-10-02
 
 Signal brand refresh and Signal Hub entry point. The analysis, statistics, measurement contract, decision statuses and evidence-pack contents are unchanged.

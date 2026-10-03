@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from io import BytesIO
 import json
+import os
 from pathlib import Path
 import platform
 import re
@@ -19,27 +20,83 @@ from . import __version__
 from .errors import DataProblem
 
 
-MAX_UPLOAD_BYTES = 50 * 1024 * 1024
-MAX_ROWS = 250_000
+DEFAULT_MAX_UPLOAD_MB = 1000
+
+
+def _configured_upload_mb() -> int:
+    """Read the launcher's upload cap so the in-code check matches Streamlit's own limit."""
+    try:
+        return max(1, int(os.getenv("MEASURESIGNAL_MAX_UPLOAD_MB", str(DEFAULT_MAX_UPLOAD_MB))))
+    except ValueError:
+        return DEFAULT_MAX_UPLOAD_MB
+
+
+# One byte limit for CSV, XLSX and JSON; Streamlit's maxUploadSize applies the same cap.
+MAX_UPLOAD_MB = _configured_upload_mb()
+MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
+# Respondent rows held in memory. Audit, correlations, EFA, omega, alpha and scoring use every complete row; the
+# alpha bootstrap and the parallel-analysis benchmark switch to large-sample methods (see analysis.py).
+MAX_ROWS = 5_000_000
 MAX_COLUMNS = 500
+MAX_TOTAL_CELLS = 300_000_000
+CSV_CHUNK_ROWS = 250_000
 ALLOWED_EXTENSIONS = {".csv", ".xlsx", ".json"}
+
+
+def _size_problem() -> DataProblem:
+    return DataProblem(
+        f"This release accepts at most {MAX_ROWS:,} rows, {MAX_COLUMNS:,} columns and {MAX_TOTAL_CELLS:,} cells per "
+        "analysis. Keep only the item, identifier and wave columns you need."
+    )
+
+
+def compact_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Store numbers in the smallest lossless dtype, in place: rating scales fit in int8 or float32."""
+    for column in frame.columns:
+        series = frame[column]
+        kind = series.dtype.kind
+        if kind in "iu":
+            frame[column] = pd.to_numeric(series, downcast="integer")
+        elif kind == "f" and series.dtype.itemsize > 4:
+            values = series.to_numpy()
+            narrow = values.astype(np.float32)
+            if np.array_equal(narrow.astype(values.dtype), values, equal_nan=True):
+                frame[column] = narrow
+    return frame
+
+
+def _read_csv(raw: bytes) -> pd.DataFrame:
+    """Read a CSV in chunks so oversized tables stop early, compacting each chunk as it arrives."""
+    chunks: list[pd.DataFrame] = []
+    rows = 0
+    with pd.read_csv(BytesIO(raw), chunksize=CSV_CHUNK_ROWS) as reader:
+        for chunk in reader:
+            rows += len(chunk)
+            if rows > MAX_ROWS or len(chunk.columns) > MAX_COLUMNS or rows * len(chunk.columns) > MAX_TOTAL_CELLS:
+                raise _size_problem()
+            chunks.append(compact_frame(chunk))
+    if not chunks:
+        raise DataProblem("The uploaded table has no data rows.")
+    if len(chunks) == 1:
+        return chunks[0]
+    frame = pd.concat(chunks, ignore_index=True)
+    chunks.clear()
+    return compact_frame(frame)
 
 
 def _validate_shape(frame: pd.DataFrame) -> pd.DataFrame:
     if frame.empty:
         raise DataProblem("The uploaded table has no data rows.")
-    if len(frame) > MAX_ROWS:
-        raise DataProblem(f"This release accepts at most {MAX_ROWS:,} rows per analysis.")
-    if len(frame.columns) > MAX_COLUMNS:
-        raise DataProblem(f"This release accepts at most {MAX_COLUMNS:,} columns.")
+    if len(frame) > MAX_ROWS or len(frame.columns) > MAX_COLUMNS or frame.size > MAX_TOTAL_CELLS:
+        raise _size_problem()
     names = [str(column).strip() for column in frame.columns]
     if any(not name for name in names):
         raise DataProblem("Every column needs a non-empty name.")
     if len(names) != len(set(names)):
         raise DataProblem("Column names must be unique.")
-    frame = frame.copy()
+    # The frame was created by read_table, so it is renamed and compacted in place instead of copied.
     frame.columns = names
-    return frame
+    return compact_frame(frame)
 
 
 def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]:
@@ -47,14 +104,14 @@ def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]
     if not raw:
         raise DataProblem("The uploaded file is empty.")
     if len(raw) > MAX_UPLOAD_BYTES:
-        raise DataProblem("The uploaded file exceeds Measure Signal's 50 MB local safety limit.")
+        raise DataProblem(f"The uploaded file exceeds Measure Signal's {MAX_UPLOAD_MB:,} MB local safety limit.")
     extension = Path(filename).suffix.casefold()
     if extension not in ALLOWED_EXTENSIONS:
         raise DataProblem("Use CSV, XLSX, or JSON for response data.")
     sheet = ""
     try:
         if extension == ".csv":
-            frame = pd.read_csv(BytesIO(raw))
+            frame = _read_csv(raw)
         elif extension == ".xlsx":
             book = pd.ExcelFile(BytesIO(raw), engine="openpyxl")
             if not book.sheet_names:
@@ -68,8 +125,13 @@ def read_table(raw: bytes, filename: str) -> tuple[pd.DataFrame, dict[str, str]]
             if not isinstance(payload, list):
                 raise DataProblem("JSON input must be an array of row objects or an object with a data array.")
             frame = pd.DataFrame(payload)
+            del payload
     except DataProblem:
         raise
+    except MemoryError as exc:
+        raise DataProblem(
+            "The file does not fit in the memory available to Measure Signal. Keep only the needed columns or save it as CSV."
+        ) from exc
     except Exception as exc:
         raise DataProblem(f"The {extension[1:].upper()} file could not be read as a rectangular table.") from exc
     return _validate_shape(frame), {

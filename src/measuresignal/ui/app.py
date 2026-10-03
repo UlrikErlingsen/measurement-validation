@@ -20,6 +20,8 @@ from measuresignal import __version__
 from measuresignal.analysis import MeasurementConfig, analyze_measure
 from measuresignal.design import (
     INVARIANCE_LEVELS,
+    AuditResult,
+    ComparabilityResult,
     assess_score_comparability,
     audit_measure,
     classify_profile,
@@ -61,7 +63,7 @@ CAUTION = (
     "response process, sampling, external relationships, fairness, and independent confirmation remain human research "
     "responsibilities. Reliability is evidence about scores in a population and use—not a permanent instrument stamp."
 )
-RESULT_KEYS = ("audit", "analysis", "decision", "comparability")
+RESULT_KEYS = ("audit", "analysis", "decision", "comparability", "audit_signature")
 
 
 def full_width(widget, *args, **kwargs):
@@ -189,9 +191,7 @@ def render_contract() -> None:
     data: pd.DataFrame = st.session_state[k("data")]
     current = dict(st.session_state.get(k("contract"), {}))
     columns = list(map(str, data.columns))
-    numeric_candidates = [
-        column for column in columns if pd.to_numeric(data[column], errors="coerce").notna().sum() >= 3
-    ]
+    numeric_candidates = _numeric_candidates(data)
     if len(numeric_candidates) < 3:
         st.error("Fewer than three numeric item candidates were detected.")
         return
@@ -427,6 +427,19 @@ def render_contract() -> None:
         st.success("Measurement contract saved. Continue to the response and item audit.")
 
 
+def _numeric_candidates(data: pd.DataFrame) -> list[str]:
+    """Columns with at least three numeric values, computed once per loaded table rather than on every rerun."""
+    signature = (id(data), data.shape)
+    cached = st.session_state.get(k("numeric_candidates"))
+    if cached and cached[0] == signature:
+        return cached[1]
+    candidates = [
+        str(column) for column in data.columns if pd.to_numeric(data[column], errors="coerce").notna().sum() >= 3
+    ]
+    st.session_state[k("numeric_candidates")] = (signature, candidates)
+    return candidates
+
+
 def render_audit() -> None:
     sig.header(
         "Step 2",
@@ -438,29 +451,48 @@ def render_audit() -> None:
         return
     data: pd.DataFrame = st.session_state[k("data")]
     contract = st.session_state[k("contract")]
+    # The audit reads every row; keep it for this data and contract instead of repeating it on each rerun.
+    signature = (id(data), data.shape, repr(sorted(contract.items())))
     try:
-        audit = audit_measure(
-            data,
-            unit=contract.get("unit"),
-            items=contract["items"],
-            reversed_items=contract.get("reversed_items", []),
-            scale_min=float(contract["scale_min"]),
-            scale_max=float(contract["scale_max"]),
-        )
-        st.session_state[k("audit")] = audit
-        comparability = assess_score_comparability(
-            data,
-            items=contract["items"],
-            group_column=contract.get("comparison_group"),
-            comparison_intended=bool(contract.get("comparison_intended", False)),
-            evidence_level=str(contract.get("invariance_evidence_level", "None established")),
-            evidence_source=str(contract.get("invariance_evidence_source", "")),
-        )
-        st.session_state[k("comparability")] = comparability
+        if (
+            st.session_state.get(k("audit_signature")) == signature
+            and k("audit") in st.session_state
+            and k("comparability") in st.session_state
+        ):
+            audit = st.session_state[k("audit")]
+            comparability = st.session_state[k("comparability")]
+        else:
+            audit, comparability = _run_audit(data, contract)
+            st.session_state[k("audit_signature")] = signature
     except Exception as exc:
         show_error(exc)
         return
+    _render_audit_results(data, contract, audit, comparability)
 
+
+def _run_audit(data: pd.DataFrame, contract: dict[str, object]) -> tuple[AuditResult, ComparabilityResult]:
+    audit = audit_measure(
+        data,
+        unit=contract.get("unit"),
+        items=contract["items"],
+        reversed_items=contract.get("reversed_items", []),
+        scale_min=float(contract["scale_min"]),
+        scale_max=float(contract["scale_max"]),
+    )
+    st.session_state[k("audit")] = audit
+    comparability = assess_score_comparability(
+        data,
+        items=contract["items"],
+        group_column=contract.get("comparison_group"),
+        comparison_intended=bool(contract.get("comparison_intended", False)),
+        evidence_level=str(contract.get("invariance_evidence_level", "None established")),
+        evidence_source=str(contract.get("invariance_evidence_source", "")),
+    )
+    st.session_state[k("comparability")] = comparability
+    return audit, comparability
+
+
+def _render_audit_results(data: pd.DataFrame, contract: dict[str, object], audit, comparability) -> None:
     summary = audit.summary
     columns = st.columns(4)
     columns[0].metric("Respondents", f"{int(summary['source_rows']):,}")
@@ -810,7 +842,7 @@ def render_methods() -> None:
 
         ### Data and correlation model
 
-        Version 1.3 uses rows complete on every selected item for factor analysis and reliability estimation; the audit
+        Version 1.4 uses rows complete on every selected item for factor analysis and reliability estimation; the audit
         separately retains all rows to show missingness. Reverse keying is declared from instrument design and applies
         `minimum + maximum - response`. Pearson treats response categories as approximately interval. Spearman replaces
         values by ranks. Neither option is a polychoric correlation model.
@@ -825,14 +857,17 @@ def render_methods() -> None:
 
         Horn-style parallel analysis compares ordered observed correlation-matrix eigenvalues with the 95th percentile
         from random normal data of the same row and item dimensions. This release labels it explicitly as a PCA-eigenvalue
-        retention diagnostic. The declared model is estimated separately by principal-axis common-factor analysis.
+        retention diagnostic. Above 20,000 complete rows the random benchmark is drawn from the Wishart distribution of
+        a null correlation matrix rather than simulated row by row (labelled in the warnings and diagnostics).
+        The declared model is estimated separately by principal-axis common-factor analysis.
         Multifactor models receive oblimin rotation so factors may correlate. Pattern loadings, communalities, factor
         correlations, cross-loadings, RMSR, and maximum residual correlation are reported.
 
         ### Alpha, omega, and scoring
 
         Raw alpha and standardized alpha summarize internal consistency under restrictive assumptions. A percentile
-        bootstrap interval shows sampling variability in raw alpha. Omega total uses the fitted common-factor covariance
+        bootstrap interval shows sampling variability in raw alpha; when it would resample more than 50,000,000 cells it
+        uses a seeded subsample rescaled to the full sample by √(m/n), recorded as `alpha_bootstrap_rows`. Omega total uses the fitted common-factor covariance
         relative to unique variance for a unit-weighted score. High coefficients can arise from redundant items or a long
         battery and do not prove unidimensionality. Alpha-if-deleted is never an automatic deletion rule.
 
@@ -890,15 +925,21 @@ PAGES = {
 
 
 def _read_upload(upload) -> None:
+    # The uploader keeps its file across reruns; skip re-reading and re-hashing up to 1000 MB when it is unchanged.
+    token = (getattr(upload, "file_id", None), upload.name, getattr(upload, "size", None))
+    if token[0] is not None and token == st.session_state.get(k("upload_token")):
+        return
     raw = upload.getvalue()
     fingerprint = hashlib.sha256(raw).hexdigest()
     if fingerprint == st.session_state.get(k("upload_fingerprint")):
+        st.session_state[k("upload_token")] = token
         return
     try:
         frame, source = read_table(raw, upload.name)
         st.session_state[k("data")] = frame
         st.session_state[k("source")] = source
         st.session_state[k("upload_fingerprint")] = fingerprint
+        st.session_state[k("upload_token")] = token
         st.session_state.pop(k("contract"), None)
         _new_contract_form()
         reset_results()

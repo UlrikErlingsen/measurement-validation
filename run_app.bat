@@ -13,4 +13,5 @@ if not exist .venv\.measuresignal-requirements-%REQ_HASH% (
   type nul > .venv\.measuresignal-requirements-%REQ_HASH%
 )
 if not defined MEASURESIGNAL_PORT set MEASURESIGNAL_PORT=8591
-python -m streamlit run app.py --server.headless=false --server.address=127.0.0.1 --server.port=%MEASURESIGNAL_PORT% --server.maxUploadSize=50 --server.fileWatcherType=none --browser.gatherUsageStats=false
+if not defined MEASURESIGNAL_MAX_UPLOAD_MB set MEASURESIGNAL_MAX_UPLOAD_MB=1000
+python -m streamlit run app.py --server.headless=false --server.address=127.0.0.1 --server.port=%MEASURESIGNAL_PORT% --server.maxUploadSize=%MEASURESIGNAL_MAX_UPLOAD_MB% --server.fileWatcherType=none --browser.gatherUsageStats=false
